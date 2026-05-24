@@ -1,4 +1,17 @@
 <!DOCTYPE html>
+<!--
+  ÉLUME — AI Hair Studio (FIXED)
+  
+  SETUP INSTRUCTIONS:
+  1. Run the Kaggle notebook (elume_kaggle_backend_fixed.ipynb)
+  2. Copy the ngrok URL from Cell 8 output
+  3. Open this HTML file in your browser
+  4. Paste the ngrok URL into the "Backend URL" field
+  5. Click "Test Connection" to verify
+  
+  WORKFLOW:
+  Upload/Camera → Face Analysis → AI Recommendations → Apply Style
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1263,13 +1276,7 @@ async function applyStyle() {
   try {
     const form = new FormData();
     form.append('image', capturedImageBlob, 'photo.jpg');
-
-
-
-
-
-
-
+    form.append('custom_prompt', selectedPrompt);  // Send Gemini-generated SDXL prompt
 
 
 
