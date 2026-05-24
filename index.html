@@ -603,38 +603,75 @@
   }
 
   /* Result */
-  .result-container {
-    display: none;
-  }
-
+  .result-container { display: none; }
   .result-container.visible { display: block; }
 
-  .result-comparison {
+  .results-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-top: 16px;
   }
 
-  .result-img-wrap {
-    position: relative;
+  .result-card {
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.3s;
   }
+  .result-card:hover { border-color: var(--gold-dim); }
+  .result-card img { width: 100%; display: block; }
 
-  .result-img-wrap img {
-    width: 100%;
-    display: block;
+  .result-card .card-label {
+    padding: 10px 12px;
+    background: var(--bg2);
   }
-
-  .result-label {
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    font-size: 8px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
+  .result-card .card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 1px;
+    font-style: italic;
+  }
+  .result-card .card-desc {
+    font-size: 9px;
+    font-weight: 300;
     color: var(--text-dim);
-    background: rgba(8,8,8,0.8);
-    padding: 4px 8px;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+  .result-card .card-loading {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg2);
+    gap: 12px;
+  }
+  .result-card .card-loading .mini-ring {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .result-card .card-loading span {
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .result-card .card-error {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg2);
+    font-size: 9px;
+    color: #c45a5a;
+    letter-spacing: 1px;
   }
 
   /* Generating state */
@@ -803,14 +840,6 @@
       <button class="btn-primary" id="analyseBtn" onclick="runAnalysis()">ANALYSE MY FACE</button>
     </div>
 
-    <div class="sep"></div>
-
-    <!-- Step 3: Apply -->
-    <div class="step" id="step3">
-      <div class="section-label">Step 03 — Apply</div>
-      <button class="btn-primary" id="applyBtn" onclick="applyStyle()" disabled>SELECT A STYLE FIRST</button>
-    </div>
-
     <div class="log" id="log"></div>
   </div>
 
@@ -829,33 +858,19 @@
       <div class="face-stats" id="faceStats"></div>
     </div>
 
-    <!-- Style options -->
-    <div class="styles-container" id="stylesContainer">
-      <div class="styles-intro" id="stylesIntro">Your personalised styles</div>
-      <div class="styles-sub">Curated for your face — select to apply</div>
-      <div class="style-options" id="styleOptions"></div>
-    </div>
-
     <!-- Generating -->
     <div class="generating-state" id="generatingState">
-      <div class="gen-text">Generating your look</div>
+      <div class="gen-text" id="genText">Analysing your face</div>
       <div class="gen-progress"></div>
-      <div class="gen-sub" id="genSub">Rendering with GPU · ~45 seconds</div>
+      <div class="gen-sub" id="genSub">Please wait</div>
     </div>
 
-    <!-- Result -->
+    <!-- Results grid -->
     <div class="result-container" id="resultContainer">
-      <div class="result-comparison">
-        <div class="result-img-wrap">
-          <img id="originalImg" src="" alt="Original">
-          <div class="result-label">ORIGINAL</div>
-        </div>
-        <div class="result-img-wrap">
-          <img id="resultImg" src="" alt="Result">
-          <div class="result-label" id="resultLabel">RESULT</div>
-        </div>
-      </div>
-      <button class="btn-primary" onclick="resetAll()" style="margin-top:8px">TRY ANOTHER STYLE</button>
+      <div class="styles-intro" id="stylesIntro">Your personalised styles</div>
+      <div class="styles-sub" id="stylesSub"></div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <button class="btn-primary" onclick="resetAll()" style="margin-top:16px">RETAKE PHOTO</button>
     </div>
 
   </div>
@@ -1137,58 +1152,108 @@ function extractFaceMetrics(lm, w, h) {
   };
 }
 
-// ─── Run analysis ─────────────────────────────────────────────
+// ─── Run analysis + auto-generate all styles ─────────────────
 async function runAnalysis() {
   if (!capturedImageBlob) { addLog('No photo captured', 'err'); return; }
-  const apiUrl2 = API_URL;
-  if (!apiUrl2) { addLog('Backend URL not set', 'err'); return; }
 
   hideRight();
-  document.getElementById('scanningOverlay').classList.add('visible');
+  document.getElementById('generatingState').classList.add('visible');
+  document.getElementById('genText').textContent = 'Analysing your face';
+  document.getElementById('genSub').textContent = 'Mapping facial geometry...';
   document.getElementById('step2').classList.add('done');
   document.getElementById('analyseBtn').disabled = true;
 
-  const statusSteps = [
-    'Mapping facial landmarks',
-    'Calculating facial geometry',
-    'Analysing proportions',
-    'Generating personalised styles',
-  ];
-
-  let si = 0;
-  const interval = setInterval(() => {
-    if (si < statusSteps.length) {
-      document.getElementById('scanStatusText').textContent = statusSteps[si++];
-      addLog(statusSteps[si-1], 'gold');
-    }
-  }, 900);
-
   try {
-    // If faceData not yet populated, do quick fallback
     if (!faceData) {
       faceData = { shape: 'Oval', ratio: '1.35', jawWidth: '75%', foreheadWidth: '80%', cheekWidth: '85%', faceLength: 'Medium' };
       addLog('Using estimated face metrics', 'gold');
     }
 
-    const styles = await generateStylesViaBackend(faceData);
-    clearInterval(interval);
+    const statsEl = document.getElementById('faceStats');
+    statsEl.innerHTML =
+      '<div class="stat"><div class="stat-label">Face Shape</div><div class="stat-value">' + faceData.shape + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Face Length</div><div class="stat-value">' + faceData.faceLength + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Jaw Ratio</div><div class="stat-value">' + faceData.jawWidth + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Forehead</div><div class="stat-value">' + faceData.foreheadWidth + '</div></div>';
+    document.getElementById('analysisBox').classList.add('visible');
 
-    document.getElementById('scanningOverlay').classList.remove('visible');
-    showAnalysisResults(faceData, styles);
-    document.getElementById('step3').classList.add('active');
-    addLog('Analysis complete', 'ok');
+    document.getElementById('genText').textContent = 'Getting style recommendations';
+    document.getElementById('genSub').textContent = 'Consulting AI stylist...';
+    addLog('Getting style recommendations...', 'gold');
+
+    const styles = await generateStylesViaBackend(faceData);
+    addLog('Got ' + styles.length + ' styles, starting GPU render', 'ok');
+
+    document.getElementById('generatingState').classList.remove('visible');
+    document.getElementById('stylesIntro').textContent = styles.length + ' styles for your ' + faceData.shape + ' face';
+    document.getElementById('stylesSub').textContent = 'Generating each look \u00b7 ~45s per style';
+
+    const grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+
+    styles.forEach(function(s, i) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.id = 'card-' + i;
+      card.innerHTML =
+        '<div class="card-loading" id="loading-' + i + '">' +
+          '<div class="mini-ring"></div>' +
+          '<span>Rendering...</span>' +
+        '</div>' +
+        '<div class="card-label">' +
+          '<div class="card-name">' + s.name + '</div>' +
+          '<div class="card-desc">' + s.desc + '</div>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    document.getElementById('resultContainer').classList.add('visible');
+
+    for (let i = 0; i < styles.length; i++) {
+      const s = styles[i];
+      addLog('Rendering ' + (i+1) + '/' + styles.length + ': ' + s.name, 'gold');
+      const loadingEl = document.getElementById('loading-' + i);
+      if (loadingEl) loadingEl.querySelector('span').textContent = 'Rendering ' + (i+1) + '/' + styles.length + '...';
+
+      try {
+        const form = new FormData();
+        form.append('image', capturedImageBlob, 'photo.jpg');
+        form.append('custom_prompt', s.prompt);
+
+        const res = await fetch(API_URL + '/generate', {
+          method: 'POST',
+          body: form,
+          headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const card = document.getElementById('card-' + i);
+        card.querySelector('.card-loading').remove();
+        const img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + data.result;
+        card.insertBefore(img, card.querySelector('.card-label'));
+        addLog('Done: ' + s.name, 'ok');
+
+      } catch (err) {
+        const el = document.getElementById('loading-' + i);
+        if (el) { el.className = 'card-error'; el.textContent = 'Failed'; }
+        addLog('Error ' + s.name + ': ' + err.message, 'err');
+      }
+    }
+
+    addLog('All styles generated', 'ok');
 
   } catch (e) {
-    clearInterval(interval);
-    document.getElementById('scanningOverlay').classList.remove('visible');
-    addLog(`Analysis error: ${e.message}`, 'err');
+    document.getElementById('generatingState').classList.remove('visible');
+    addLog('Analysis error: ' + e.message, 'err');
     document.getElementById('analyseBtn').disabled = false;
   }
 }
 
-// ─── Analyse via backend (Gemini key stays server-side) ──────
+// ─── Analyse via backend ──────────────────────────────────────
 async function generateStylesViaBackend(fd) {
-  const apiUrl = API_URL;
   const form = new FormData();
   form.append('face_shape', fd.shape);
   form.append('face_length', fd.faceLength);
@@ -1197,7 +1262,7 @@ async function generateStylesViaBackend(fd) {
   form.append('cheek_width', fd.cheekWidth);
   form.append('ratio', fd.ratio);
 
-  const res = await fetch(`${apiUrl}/analyse`, {
+  const res = await fetch(API_URL + '/analyse', {
     method: 'POST',
     body: form,
     headers: { 'ngrok-skip-browser-warning': 'true' }
@@ -1208,139 +1273,24 @@ async function generateStylesViaBackend(fd) {
   return data.styles;
 }
 
-// ─── Show results ─────────────────────────────────────────────
-function showAnalysisResults(fd, styles) {
-  sessionStorage.setItem('lastStyles', JSON.stringify(styles));
-  // Face stats
-  const statsEl = document.getElementById('faceStats');
-  statsEl.innerHTML = `
-    <div class="stat"><div class="stat-label">Face Shape</div><div class="stat-value">${fd.shape}</div></div>
-    <div class="stat"><div class="stat-label">Face Length</div><div class="stat-value">${fd.faceLength}</div></div>
-    <div class="stat"><div class="stat-label">Jaw Ratio</div><div class="stat-value">${fd.jawWidth}</div></div>
-    <div class="stat"><div class="stat-label">Forehead</div><div class="stat-value">${fd.foreheadWidth}</div></div>
-  `;
-  document.getElementById('analysisBox').classList.add('visible');
-
-  // Style options
-  document.getElementById('stylesIntro').textContent = `${styles.length} styles for your ${fd.shape} face`;
-  const optionsEl = document.getElementById('styleOptions');
-  optionsEl.innerHTML = '';
-
-  styles.forEach((s, i) => {
-    const div = document.createElement('div');
-    div.className = 'style-option';
-    div.innerHTML = `
-      <div>
-        <div class="style-name">${s.name}</div>
-        <div class="style-desc">${s.desc}</div>
-      </div>
-      <div class="style-badge">Select</div>
-    `;
-    div.onclick = () => selectStyleOption(div, s, i);
-    optionsEl.appendChild(div);
-  });
-
-  document.getElementById('stylesContainer').classList.add('visible');
-}
-
-function selectStyleOption(el, style, idx) {
-  document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedStyle = style.name;
-  selectedPrompt = style.prompt;
-  const btn = document.getElementById('applyBtn');
-  btn.disabled = false;
-  btn.textContent = `APPLY — ${style.name.toUpperCase()}`;
-  addLog(`Selected: ${style.name}`, 'gold');
-}
-
-// ─── Apply style ──────────────────────────────────────────────
-async function applyStyle() {
-  const apiUrl = API_URL;
-  if (!capturedImageBlob) { addLog('No photo', 'err'); return; }
-  if (!selectedPrompt) { addLog('Select a style', 'err'); return; }
-
-  document.getElementById('stylesContainer').classList.remove('visible');
-  document.getElementById('analysisBox').classList.remove('visible');
-  document.getElementById('generatingState').classList.add('visible');
-  document.getElementById('applyBtn').disabled = true;
-
-  addLog(`Sending to GPU backend...`, 'gold');
-
-  // Use custom prompt by sending as style key — but backend uses fixed keys
-  // So we inject the prompt directly via a custom endpoint workaround
-  // We'll create a FormData with image + use 'bob' as fallback style key
-  // and override with prompt via a hidden field the backend reads if present
-
-  try {
-    const form = new FormData();
-    form.append('image', capturedImageBlob, 'photo.jpg');
-    form.append('custom_prompt', selectedPrompt);  // Send Gemini-generated SDXL prompt
-
-
-
-
-
-
-    const res = await fetch(`${apiUrl}/generate`, {
-      method: 'POST',
-      body: form,
-      headers: { 'ngrok-skip-browser-warning': 'true' }
-    });
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    document.getElementById('generatingState').classList.remove('visible');
-    document.getElementById('originalImg').src = `data:image/jpeg;base64,${data.original}`;
-    document.getElementById('resultImg').src = `data:image/jpeg;base64,${data.result}`;
-    document.getElementById('resultLabel').textContent = selectedStyle.toUpperCase();
-    document.getElementById('resultContainer').classList.add('visible');
-    addLog(`Done! ${selectedStyle} applied`, 'ok');
-
-  } catch (e) {
-    document.getElementById('generatingState').classList.remove('visible');
-    document.getElementById('stylesContainer').classList.add('visible');
-    document.getElementById('analysisBox').classList.add('visible');
-    document.getElementById('applyBtn').disabled = false;
-    addLog(`Error: ${e.message}`, 'err');
-  }
-}
-
-function mapToClosestKey(styleName) {
-  const n = styleName.toLowerCase();
-  if (n.includes('pixie') || n.includes('short') || n.includes('crop')) return 'pixie';
-  if (n.includes('bob') || n.includes('chin') || n.includes('jaw')) return 'bob';
-  if (n.includes('buzz') || n.includes('shave') || n.includes('close')) return 'buzz';
-  if (n.includes('wav') || n.includes('long')) return 'long_wavy';
-  if (n.includes('curl') || n.includes('afro') || n.includes('coil')) return 'curly_afro';
-  if (n.includes('straight') || n.includes('sleek')) return 'medium_straight';
-  if (n.includes('fade') || n.includes('taper') || n.includes('under')) return 'man_fade';
-  if (n.includes('texture') || n.includes('quiff') || n.includes('pompadour')) return 'man_textured';
-  return 'bob';
-}
-
 // ─── Helpers ──────────────────────────────────────────────────
 function hideRight() {
   document.getElementById('analysisBox').classList.remove('visible');
-  document.getElementById('scanningOverlay').classList.remove('visible');
-  document.getElementById('stylesContainer').classList.remove('visible');
   document.getElementById('generatingState').classList.remove('visible');
   document.getElementById('resultContainer').classList.remove('visible');
 }
 
 function resetAll() {
-  selectedStyle = null;
-  selectedPrompt = null;
+  faceData = null;
+  capturedImageBlob = null;
+  capturedImageDataUrl = null;
   hideRight();
-  document.getElementById('applyBtn').disabled = true;
-  document.getElementById('applyBtn').textContent = 'SELECT A STYLE FIRST';
-  if (capturedImageDataUrl) {
-    showAnalysisResults(faceData, JSON.parse(sessionStorage.getItem('lastStyles') || '[]'));
-    document.getElementById('analysisBox').classList.add('visible');
-  }
+  document.getElementById('analyseBtn').disabled = false;
+  document.getElementById('step2').classList.remove('done');
+  document.getElementById('photoPreview').classList.remove('visible');
+  document.getElementById('previewImg').src = '';
+  addLog('Ready for new photo', 'ok');
 }
-
 
 </script>
 </body>
