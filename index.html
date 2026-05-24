@@ -1210,6 +1210,7 @@ async function generateStylesViaBackend(fd) {
 
 // ─── Show results ─────────────────────────────────────────────
 function showAnalysisResults(fd, styles) {
+  sessionStorage.setItem('lastStyles', JSON.stringify(styles));
   // Face stats
   const statsEl = document.getElementById('faceStats');
   statsEl.innerHTML = `
@@ -1340,12 +1341,7 @@ function resetAll() {
   }
 }
 
-// Cache styles for reset
-const origShowAnalysis = showAnalysisResults;
-function showAnalysisResults(fd, styles) {
-  sessionStorage.setItem('lastStyles', JSON.stringify(styles));
-  origShowAnalysis(fd, styles);
-}
+
 </script>
 </body>
 </html>
