@@ -744,9 +744,6 @@
   <div class="logo">É<span>L</span>UME</div>
   <div class="api-config">
     <div class="status-dot" id="statusDot"></div>
-    <input type="text" id="apiUrl" placeholder="https://your-tunnel.ngrok-free.app" />
-    <button class="btn-ghost" onclick="ping()">PING</button>
-
   </div>
 </header>
 
@@ -871,6 +868,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 
 <script>
+// ─── Backend URL (hardcoded) ──────────────────────────────────
+const API_URL = 'https://data-silicon-studio.ngrok-free.dev';
+window.addEventListener('load', () => setTimeout(ping, 800));
+
 // ─── State ───────────────────────────────────────────────────
 let mode = null;
 let capturedImageBlob = null;
@@ -895,12 +896,10 @@ function addLog(msg, type = '') {
 
 // ─── Ping ─────────────────────────────────────────────────────
 async function ping() {
-  const url = document.getElementById('apiUrl').value.trim();
-  if (!url) return;
   const dot = document.getElementById('statusDot');
   dot.className = 'status-dot';
   try {
-    const res = await fetch(`${url}/health`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+    const res = await fetch(`${API_URL}/health`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
     const data = await res.json();
     dot.className = 'status-dot green';
     addLog(`Backend online · GPU: ${data.gpu}`, 'ok');
@@ -1141,8 +1140,8 @@ function extractFaceMetrics(lm, w, h) {
 // ─── Run analysis ─────────────────────────────────────────────
 async function runAnalysis() {
   if (!capturedImageBlob) { addLog('No photo captured', 'err'); return; }
-  const apiUrl2 = document.getElementById('apiUrl').value.trim();
-  if (!apiUrl2) { addLog('Enter backend URL first', 'err'); return; }
+  const apiUrl2 = API_URL;
+  if (!apiUrl2) { addLog('Backend URL not set', 'err'); return; }
 
   hideRight();
   document.getElementById('scanningOverlay').classList.add('visible');
@@ -1189,7 +1188,7 @@ async function runAnalysis() {
 
 // ─── Analyse via backend (Gemini key stays server-side) ──────
 async function generateStylesViaBackend(fd) {
-  const apiUrl = document.getElementById('apiUrl').value.trim();
+  const apiUrl = API_URL;
   const form = new FormData();
   form.append('face_shape', fd.shape);
   form.append('face_length', fd.faceLength);
@@ -1256,8 +1255,7 @@ function selectStyleOption(el, style, idx) {
 
 // ─── Apply style ──────────────────────────────────────────────
 async function applyStyle() {
-  const apiUrl = document.getElementById('apiUrl').value.trim();
-  if (!apiUrl) { addLog('Enter backend URL', 'err'); return; }
+  const apiUrl = API_URL;
   if (!capturedImageBlob) { addLog('No photo', 'err'); return; }
   if (!selectedPrompt) { addLog('Select a style', 'err'); return; }
 
