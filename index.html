@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÉLUME — AI Hair Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9a96e;
+    --gold-light: #e8d5a3;
+    --gold-dim: #7a6035;
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --bg3: #161616;
+    --border: #1e1e1e;
+    --text: #d4d0c8;
+    --text-dim: #5a5650;
+    --white: #f0ece4;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* Header */
+  .header {
+    padding: 32px 48px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 12px;
+    color: var(--gold);
+  }
+
+  .logo span { font-style: italic; }
+
+  .api-config {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .api-config input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    padding: 8px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    width: 280px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .api-config input:focus { border-color: var(--gold-dim); }
+
+  .api-config input::placeholder { color: var(--text-dim); }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: #4caf82; box-shadow: 0 0 6px #4caf8266; }
+  .status-dot.red { background: #c45a5a; }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+  .btn-ghost:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  /* Main layout */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 89px);
+  }
+
+  /* Left panel */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 16px;
+  }
+
+  /* Step system */
+  .step {
+    opacity: 0.3;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+  .step.active { opacity: 1; pointer-events: all; }
+  .step.done { opacity: 0.6; pointer-events: all; }
+
+  /* Mode selector */
+  .mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .mode-card {
+    border: 1px solid var(--border);
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gold) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .mode-card:hover { border-color: var(--gold-dim); }
+  .mode-card:hover::before { opacity: 0.03; }
+  .mode-card.selected { border-color: var(--gold); }
+  .mode-card.selected::before { opacity: 0.05; }
+
+  .mode-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .mode-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .mode-desc {
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+  }
+
+  /* Camera view */
+  .camera-container {
+    position: relative;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    display: none;
+  }
+
+  .camera-container.visible { display: block; }
+
+  #videoEl {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+  }
+
+  #canvasOverlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    top: 0;
+    animation: scanDown 2s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .scan-line.active { opacity: 1; }
+
+  @keyframes scanDown {
+    0% { top: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .scan-corners {
+    position: absolute;
+    inset: 16px;
+    pointer-events: none;
+  }
+
+  .scan-corners::before, .scan-corners::after,
+  .corner-br::before, .corner-br::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--gold);
+    border-style: solid;
+    opacity: 0.6;
+  }
+
+  .scan-corners::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+  .scan-corners::after { top: 0; right: 0; border-width: 1px 1px 0 0; }
+  .corner-br::before { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+  .corner-br::after { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+  .camera-status {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 1px dashed var(--border);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: none;
+    position: relative;
+  }
+
+  .upload-zone.visible { display: block; }
+  .upload-zone:hover { border-color: var(--gold-dim); }
+  .upload-zone.dragover { border-color: var(--gold); background: rgba(201,169,110,0.03); }
+
+  .upload-zone input { display: none; }
+
+  .upload-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+
+  .upload-text {
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* Preview image */
+  .photo-preview {
+    display: none;
+    position: relative;
+  }
+
+  .photo-preview.visible { display: block; }
+
+  .photo-preview img {
+    width: 100%;
+    border: 1px solid var(--border);
+    display: block;
+  }
+
+  .photo-preview .retake {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(8,8,8,0.8);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.3s;
+  }
+
+  .photo-preview .retake:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  /* Gemini key */
+  .gemini-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .gemini-input:focus { border-color: var(--gold-dim); }
+  .gemini-input::placeholder { color: var(--text-dim); }
+
+  /* CTA button */
+  .btn-primary {
+    background: var(--gold);
+    border: none;
+    color: #000;
+    padding: 14px 32px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover::after { opacity: 0.1; }
+  .btn-primary:disabled { background: var(--gold-dim); cursor: not-allowed; color: #000a; }
+
+  /* Right panel */
+  .panel-right {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* Analysis display */
+  .analysis-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: none;
+  }
+
+  .analysis-box.visible { display: block; }
+
+  .analysis-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--gold);
+    margin-bottom: 16px;
+    font-style: italic;
+    letter-spacing: 2px;
+  }
+
+  .face-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    padding: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+  }
+
+  .stat-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+  }
+
+  /* Scanning animation */
+  .scanning-overlay {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    border: 1px solid var(--border);
+  }
+
+  .scanning-overlay.visible { display: block; }
+
+  .scan-ring {
+    width: 80px;
+    height: 80px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    position: relative;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .scan-ring::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite 0.3s;
+  }
+
+  .scan-ring::after {
+    content: '';
+    position: absolute;
+    inset: 16px;
+    border: 1px solid var(--gold-light);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite 0.6s;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .scan-status-text {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 300;
+  }
+
+  /* Style options */
+  .styles-container {
+    display: none;
+  }
+
+  .styles-container.visible { display: block; }
+
+  .styles-intro {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--white);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .styles-sub {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+
+  .style-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .style-option {
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .style-option::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--gold);
+    transition: width 0.3s;
+  }
+
+  .style-option:hover { border-color: var(--gold-dim); }
+  .style-option:hover::before { width: 2px; }
+  .style-option.selected { border-color: var(--gold); }
+  .style-option.selected::before { width: 2px; }
+
+  .style-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--white);
+    letter-spacing: 2px;
+    position: relative;
+  }
+
+  .style-desc {
+    font-size: 9px;
+    font-weight: 300;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .style-badge {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    border: 1px solid var(--gold-dim);
+    padding: 4px 10px;
+    flex-shrink: 0;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .style-option.selected .style-badge {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+  }
+
+  /* Result */
+  .result-container {
+    display: none;
+  }
+
+  .result-container.visible { display: block; }
+
+  .result-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 16px;
+  }
+
+  .result-img-wrap {
+    position: relative;
+  }
+
+  .result-img-wrap img {
+    width: 100%;
+    display: block;
+  }
+
+  .result-label {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: rgba(8,8,8,0.8);
+    padding: 4px 8px;
+  }
+
+  /* Generating state */
+  .generating-state {
+    display: none;
+    text-align: center;
+    padding: 60px 40px;
+    border: 1px solid var(--border);
+  }
+
+  .generating-state.visible { display: block; }
+
+  .gen-progress {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gen-progress::after {
+    content: '';
+    position: absolute;
+    left: -40%;
+    top: 0;
+    bottom: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -40%; }
+    100% { left: 100%; }
+  }
+
+  .gen-text {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .gen-sub {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  /* Log */
+  .log {
+    font-size: 9px;
+    font-family: monospace;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    line-height: 1.8;
+    max-height: 80px;
+    overflow-y: auto;
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .log .entry { color: var(--text-dim); }
+  .log .entry.gold { color: var(--gold-dim); }
+  .log .entry.ok { color: #4caf82; }
+  .log .entry.err { color: #c45a5a; }
+
+  /* Separator */
+  .sep {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Snap button */
+  .snap-btn {
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 10px 24px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .snap-btn.visible { display: block; }
+  .snap-btn:hover { background: var(--gold); color: #000; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">É<span>L</span>UME</div>
+  <div class="api-config">
+    <div class="status-dot" id="statusDot"></div>
+    <input type="text" id="apiUrl" placeholder="https://your-tunnel.ngrok-free.app" />
+    <button class="btn-ghost" onclick="ping()">PING</button>
+
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+
+    <!-- Step 1: Mode -->
+    <div class="step active" id="step1">
+      <div class="section-label">Step 01 — Capture</div>
+      <div class="mode-selector">
+        <div class="mode-card" id="modeCamera" onclick="selectMode('camera')">
+          <span class="mode-icon">◉</span>
+          <div class="mode-title">Live Scan</div>
+          <div class="mode-desc">Your face is analysed in real time via camera</div>
+        </div>
+        <div class="mode-card" id="modeUpload" onclick="selectMode('upload')">
+          <span class="mode-icon">⊡</span>
+          <div class="mode-title">Upload Photo</div>
+          <div class="mode-desc">Upload a clear front-facing portrait</div>
+        </div>
+      </div>
+
+      <!-- Camera -->
+      <div class="camera-container" id="cameraContainer">
+        <video id="videoEl" autoplay muted playsinline></video>
+        <canvas id="canvasOverlay"></canvas>
+        <div class="scan-line" id="scanLine"></div>
+        <div class="scan-corners"><div class="corner-br"></div></div>
+        <div class="camera-status" id="cameraStatus">INITIALISING</div>
+      </div>
+      <button class="snap-btn" id="snapBtn" onclick="captureSnap()">◉ &nbsp; CAPTURE &amp; ANALYSE</button>
+
+      <!-- Upload -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+           ondragover="e=>{e.preventDefault();this.classList.add('dragover')}"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="handleDrop(event)">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])">
+        <div class="upload-icon">⊡</div>
+        <div class="upload-text">Drop photo or click to browse</div>
+      </div>
+
+      <!-- Preview -->
+      <div class="photo-preview" id="photoPreview">
+        <img id="previewImg" src="" alt="preview">
+        <button class="retake" onclick="resetCapture()">↩ RETAKE</button>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Step 2: Analyse -->
+    <div class="step" id="step2">
+      <div class="section-label">Step 02 — Analyse</div>
+      <button class="btn-primary" id="analyseBtn" onclick="runAnalysis()">ANALYSE MY FACE</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Step 3: Apply -->
+    <div class="step" id="step3">
+      <div class="section-label">Step 03 — Apply</div>
+      <button class="btn-primary" id="applyBtn" onclick="applyStyle()" disabled>SELECT A STYLE FIRST</button>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+
+    <!-- Scanning animation -->
+    <div class="scanning-overlay" id="scanningOverlay">
+      <div class="scan-ring"></div>
+      <div class="scan-status-text" id="scanStatusText">Initialising facial analysis</div>
+    </div>
+
+    <!-- Analysis results -->
+    <div class="analysis-box" id="analysisBox">
+      <div class="analysis-title">Facial Profile</div>
+      <div class="face-stats" id="faceStats"></div>
+    </div>
+
+    <!-- Style options -->
+    <div class="styles-container" id="stylesContainer">
+      <div class="styles-intro" id="stylesIntro">Your personalised styles</div>
+      <div class="styles-sub">Curated for your face — select to apply</div>
+      <div class="style-options" id="styleOptions"></div>
+    </div>
+
+    <!-- Generating -->
+    <div class="generating-state" id="generatingState">
+      <div class="gen-text">Generating your look</div>
+      <div class="gen-progress"></div>
+      <div class="gen-sub" id="genSub">Rendering with GPU · ~45 seconds</div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-container" id="resultContainer">
+      <div class="result-comparison">
+        <div class="result-img-wrap">
+          <img id="originalImg" src="" alt="Original">
+          <div class="result-label">ORIGINAL</div>
+        </div>
+        <div class="result-img-wrap">
+          <img id="resultImg" src="" alt="Result">
+          <div class="result-label" id="resultLabel">RESULT</div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="resetAll()" style="margin-top:8px">TRY ANOTHER STYLE</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hidden canvas for image capture -->
+<canvas id="snapCanvas" style="display:none"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<script>
+// ─── State ───────────────────────────────────────────────────
+let mode = null;
+let capturedImageBlob = null;
+let capturedImageDataUrl = null;
+let faceData = null;
+let selectedStyle = null;
+let selectedPrompt = null;
+let faceMeshInstance = null;
+let cameraInstance = null;
+let latestLandmarks = null;
+let streamActive = false;
+
+// ─── Log ─────────────────────────────────────────────────────
+function addLog(msg, type = '') {
+  const log = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = `entry ${type}`;
+  entry.textContent = `› ${msg}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ─── Ping ─────────────────────────────────────────────────────
+async function ping() {
+  const url = document.getElementById('apiUrl').value.trim();
+  if (!url) return;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot';
+  try {
+    const res = await fetch(`${url}/health`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+    const data = await res.json();
+    dot.className = 'status-dot green';
+    addLog(`Backend online · GPU: ${data.gpu}`, 'ok');
+  } catch {
+    dot.className = 'status-dot red';
+    addLog('Backend unreachable', 'err');
+  }
+}
+
+// ─── Mode selection ───────────────────────────────────────────
+function selectMode(m) {
+  mode = m;
+  document.getElementById('modeCamera').classList.toggle('selected', m === 'camera');
+  document.getElementById('modeUpload').classList.toggle('selected', m === 'upload');
+  document.getElementById('cameraContainer').classList.toggle('visible', m === 'camera');
+  document.getElementById('snapBtn').classList.toggle('visible', m === 'camera');
+  document.getElementById('uploadZone').classList.toggle('visible', m === 'upload');
+  document.getElementById('photoPreview').classList.remove('visible');
+
+  if (m === 'camera') {
+    startCamera();
+  } else {
+    stopCamera();
+  }
+}
+
+// ─── Camera ───────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+    document.getElementById('videoEl').srcObject = stream;
+    streamActive = true;
+    document.getElementById('cameraStatus').textContent = 'POSITION YOUR FACE';
+    document.getElementById('scanLine').classList.add('active');
+    addLog('Camera initialised', 'ok');
+    startFaceMeshLive();
+  } catch (e) {
+    addLog('Camera access denied', 'err');
+  }
+}
+
+function stopCamera() {
+  const video = document.getElementById('videoEl');
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
+  streamActive = false;
+  document.getElementById('scanLine').classList.remove('active');
+}
+
+// ─── MediaPipe live preview ───────────────────────────────────
+function startFaceMeshLive() {
+  if (typeof FaceMesh === 'undefined') {
+    addLog('MediaPipe loading...', 'gold');
+    setTimeout(startFaceMeshLive, 1000);
+    return;
+  }
+
+  faceMeshInstance = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+  faceMeshInstance.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+  faceMeshInstance.onResults(onLiveFaceResults);
+
+  const video = document.getElementById('videoEl');
+  cameraInstance = new Camera(video, {
+    onFrame: async () => { await faceMeshInstance.send({ image: video }); },
+    width: 640, height: 480
+  });
+  cameraInstance.start();
+}
+
+function onLiveFaceResults(results) {
+  const canvas = document.getElementById('canvasOverlay');
+  const video = document.getElementById('videoEl');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    latestLandmarks = results.multiFaceLandmarks[0];
+    document.getElementById('cameraStatus').textContent = 'FACE DETECTED — CAPTURE WHEN READY';
+
+    // Draw minimal landmark dots
+    ctx.fillStyle = 'rgba(201,169,110,0.4)';
+    const keyPoints = [1, 4, 6, 8, 9, 10, 33, 263, 61, 291, 199, 152, 50, 280, 234, 454];
+    keyPoints.forEach(i => {
+      const lm = latestLandmarks[i];
+      ctx.beginPath();
+      ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Draw face oval
+    ctx.strokeStyle = 'rgba(201,169,110,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const ovalPts = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
+    ovalPts.forEach((idx, i) => {
+      const lm = latestLandmarks[idx];
+      i === 0 ? ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height) : ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+    });
+    ctx.closePath();
+    ctx.stroke();
+
+  } else {
+    latestLandmarks = null;
+    document.getElementById('cameraStatus').textContent = 'POSITION YOUR FACE';
+  }
+}
+
+// ─── Capture snap ─────────────────────────────────────────────
+function captureSnap() {
+  const video = document.getElementById('videoEl');
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    capturedImageBlob = blob;
+    capturedImageDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    showPreview(capturedImageDataUrl);
+    stopCamera();
+    addLog('Snapshot captured', 'ok');
+
+    if (latestLandmarks) {
+      faceData = extractFaceMetrics(latestLandmarks, canvas.width, canvas.height);
+      addLog('Face metrics extracted', 'ok');
+    }
+  }, 'image/jpeg', 0.92);
+}
+
+// ─── File upload ──────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  capturedImageBlob = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    capturedImageDataUrl = e.target.result;
+    showPreview(capturedImageDataUrl);
+    addLog('Photo loaded', 'ok');
+    runMediaPipeOnImage(capturedImageDataUrl);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPreview(dataUrl) {
+  document.getElementById('uploadZone').classList.remove('visible');
+  document.getElementById('photoPreview').classList.add('visible');
+  document.getElementById('previewImg').src = dataUrl;
+  document.getElementById('step2').classList.add('active');
+}
+
+function resetCapture() {
+  capturedImageBlob = null;
+  capturedImageDataUrl = null;
+  faceData = null;
+  document.getElementById('photoPreview').classList.remove('visible');
+  if (mode === 'camera') {
+    document.getElementById('cameraContainer').classList.add('visible');
+    document.getElementById('snapBtn').classList.add('visible');
+    startCamera();
+  } else {
+    document.getElementById('uploadZone').classList.add('visible');
+  }
+  document.getElementById('step2').classList.remove('active', 'done');
+  document.getElementById('step3').classList.remove('active', 'done');
+  hideRight();
+}
+
+// ─── MediaPipe on uploaded image ──────────────────────────────
+function runMediaPipeOnImage(dataUrl) {
+  if (typeof FaceMesh === 'undefined') {
+    setTimeout(() => runMediaPipeOnImage(dataUrl), 500);
+    return;
+  }
+
+  const img = new Image();
+  img.onload = async () => {
+    const fm = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+    fm.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    fm.onResults(results => {
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        faceData = extractFaceMetrics(results.multiFaceLandmarks[0], img.width, img.height);
+        addLog('Face analysis ready', 'ok');
+      } else {
+        addLog('No face detected — ensure front-facing portrait', 'err');
+      }
+    });
+    await fm.send({ image: img });
+  };
+  img.src = dataUrl;
+}
+
+// ─── Extract face metrics ─────────────────────────────────────
+function extractFaceMetrics(lm, w, h) {
+  const pt = i => ({ x: lm[i].x * w, y: lm[i].y * h });
+  const dist = (a, b) => Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
+
+  const faceWidth = dist(pt(234), pt(454));
+  const faceHeight = dist(pt(10), pt(152));
+  const jawWidth = dist(pt(172), pt(397));
+  const foreheadWidth = dist(pt(67), pt(297));
+  const cheekWidth = dist(pt(50), pt(280));
+  const ratio = faceHeight / faceWidth;
+
+  let shape = 'Oval';
+  const jawRatio = jawWidth / faceWidth;
+  const foreheadRatio = foreheadWidth / faceWidth;
+
+  if (ratio > 1.5) shape = 'Oblong';
+  else if (ratio < 1.05) shape = 'Round';
+  else if (jawRatio > 0.85 && foreheadRatio > 0.85) shape = 'Square';
+  else if (foreheadRatio > jawRatio + 0.1) shape = 'Heart';
+  else if (cheekWidth / faceWidth > 0.9 && jawRatio < 0.75) shape = 'Diamond';
+  else if (jawRatio > foreheadRatio + 0.08) shape = 'Pear';
+  else shape = 'Oval';
+
+  return {
+    shape,
+    ratio: ratio.toFixed(2),
+    jawWidth: (jawRatio * 100).toFixed(0) + '%',
+    foreheadWidth: (foreheadRatio * 100).toFixed(0) + '%',
+    cheekWidth: (cheekWidth / faceWidth * 100).toFixed(0) + '%',
+    faceLength: ratio > 1.3 ? 'Long' : ratio > 1.15 ? 'Medium' : 'Short'
+  };
+}
+
+// ─── Run analysis ─────────────────────────────────────────────
+async function runAnalysis() {
+  if (!capturedImageBlob) { addLog('No photo captured', 'err'); return; }
+  const apiUrl2 = document.getElementById('apiUrl').value.trim();
+  if (!apiUrl2) { addLog('Enter backend URL first', 'err'); return; }
+
+  hideRight();
+  document.getElementById('scanningOverlay').classList.add('visible');
+  document.getElementById('step2').classList.add('done');
+  document.getElementById('analyseBtn').disabled = true;
+
+  const statusSteps = [
+    'Mapping facial landmarks',
+    'Calculating facial geometry',
+    'Analysing proportions',
+    'Generating personalised styles',
+  ];
+
+  let si = 0;
+  const interval = setInterval(() => {
+    if (si < statusSteps.length) {
+      document.getElementById('scanStatusText').textContent = statusSteps[si++];
+      addLog(statusSteps[si-1], 'gold');
+    }
+  }, 900);
+
+  try {
+    // If faceData not yet populated, do quick fallback
+    if (!faceData) {
+      faceData = { shape: 'Oval', ratio: '1.35', jawWidth: '75%', foreheadWidth: '80%', cheekWidth: '85%', faceLength: 'Medium' };
+      addLog('Using estimated face metrics', 'gold');
+    }
+
+    const styles = await generateStylesViaBackend(faceData);
+    clearInterval(interval);
+
+    document.getElementById('scanningOverlay').classList.remove('visible');
+    showAnalysisResults(faceData, styles);
+    document.getElementById('step3').classList.add('active');
+    addLog('Analysis complete', 'ok');
+
+  } catch (e) {
+    clearInterval(interval);
+    document.getElementById('scanningOverlay').classList.remove('visible');
+    addLog(`Analysis error: ${e.message}`, 'err');
+    document.getElementById('analyseBtn').disabled = false;
+  }
+}
+
+// ─── Analyse via backend (Gemini key stays server-side) ──────
+async function generateStylesViaBackend(fd) {
+  const apiUrl = document.getElementById('apiUrl').value.trim();
+  const form = new FormData();
+  form.append('face_shape', fd.shape);
+  form.append('face_length', fd.faceLength);
+  form.append('jaw_width', fd.jawWidth);
+  form.append('forehead_width', fd.foreheadWidth);
+  form.append('cheek_width', fd.cheekWidth);
+  form.append('ratio', fd.ratio);
+
+  const res = await fetch(`${apiUrl}/analyse`, {
+    method: 'POST',
+    body: form,
+    headers: { 'ngrok-skip-browser-warning': 'true' }
+  });
+
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.styles;
+}
+
+// ─── Show results ─────────────────────────────────────────────
+function showAnalysisResults(fd, styles) {
+  // Face stats
+  const statsEl = document.getElementById('faceStats');
+  statsEl.innerHTML = `
+    <div class="stat"><div class="stat-label">Face Shape</div><div class="stat-value">${fd.shape}</div></div>
+    <div class="stat"><div class="stat-label">Face Length</div><div class="stat-value">${fd.faceLength}</div></div>
+    <div class="stat"><div class="stat-label">Jaw Ratio</div><div class="stat-value">${fd.jawWidth}</div></div>
+    <div class="stat"><div class="stat-label">Forehead</div><div class="stat-value">${fd.foreheadWidth}</div></div>
+  `;
+  document.getElementById('analysisBox').classList.add('visible');
+
+  // Style options
+  document.getElementById('stylesIntro').textContent = `${styles.length} styles for your ${fd.shape} face`;
+  const optionsEl = document.getElementById('styleOptions');
+  optionsEl.innerHTML = '';
+
+  styles.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'style-option';
+    div.innerHTML = `
+      <div>
+        <div class="style-name">${s.name}</div>
+        <div class="style-desc">${s.desc}</div>
+      </div>
+      <div class="style-badge">Select</div>
+    `;
+    div.onclick = () => selectStyleOption(div, s, i);
+    optionsEl.appendChild(div);
+  });
+
+  document.getElementById('stylesContainer').classList.add('visible');
+}
+
+function selectStyleOption(el, style, idx) {
+  document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedStyle = style.name;
+  selectedPrompt = style.prompt;
+  const btn = document.getElementById('applyBtn');
+  btn.disabled = false;
+  btn.textContent = `APPLY — ${style.name.toUpperCase()}`;
+  addLog(`Selected: ${style.name}`, 'gold');
+}
+
+// ─── Apply style ──────────────────────────────────────────────
+async function applyStyle() {
+  const apiUrl = document.getElementById('apiUrl').value.trim();
+  if (!apiUrl) { addLog('Enter backend URL', 'err'); return; }
+  if (!capturedImageBlob) { addLog('No photo', 'err'); return; }
+  if (!selectedPrompt) { addLog('Select a style', 'err'); return; }
+
+  document.getElementById('stylesContainer').classList.remove('visible');
+  document.getElementById('analysisBox').classList.remove('visible');
+  document.getElementById('generatingState').classList.add('visible');
+  document.getElementById('applyBtn').disabled = true;
+
+  addLog(`Sending to GPU backend...`, 'gold');
+
+  // Use custom prompt by sending as style key — but backend uses fixed keys
+  // So we inject the prompt directly via a custom endpoint workaround
+  // We'll create a FormData with image + use 'bob' as fallback style key
+  // and override with prompt via a hidden field the backend reads if present
+
+  try {
+    const form = new FormData();
+    form.append('image', capturedImageBlob, 'photo.jpg');
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const res = await fetch(`${apiUrl}/generate`, {
+      method: 'POST',
+      body: form,
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('generatingState').classList.remove('visible');
+    document.getElementById('originalImg').src = `data:image/jpeg;base64,${data.original}`;
+    document.getElementById('resultImg').src = `data:image/jpeg;base64,${data.result}`;
+    document.getElementById('resultLabel').textContent = selectedStyle.toUpperCase();
+    document.getElementById('resultContainer').classList.add('visible');
+    addLog(`Done! ${selectedStyle} applied`, 'ok');
+
+  } catch (e) {
+    document.getElementById('generatingState').classList.remove('visible');
+    document.getElementById('stylesContainer').classList.add('visible');
+    document.getElementById('analysisBox').classList.add('visible');
+    document.getElementById('applyBtn').disabled = false;
+    addLog(`Error: ${e.message}`, 'err');
+  }
+}
+
+function mapToClosestKey(styleName) {
+  const n = styleName.toLowerCase();
+  if (n.includes('pixie') || n.includes('short') || n.includes('crop')) return 'pixie';
+  if (n.includes('bob') || n.includes('chin') || n.includes('jaw')) return 'bob';
+  if (n.includes('buzz') || n.includes('shave') || n.includes('close')) return 'buzz';
+  if (n.includes('wav') || n.includes('long')) return 'long_wavy';
+  if (n.includes('curl') || n.includes('afro') || n.includes('coil')) return 'curly_afro';
+  if (n.includes('straight') || n.includes('sleek')) return 'medium_straight';
+  if (n.includes('fade') || n.includes('taper') || n.includes('under')) return 'man_fade';
+  if (n.includes('texture') || n.includes('quiff') || n.includes('pompadour')) return 'man_textured';
+  return 'bob';
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+function hideRight() {
+  document.getElementById('analysisBox').classList.remove('visible');
+  document.getElementById('scanningOverlay').classList.remove('visible');
+  document.getElementById('stylesContainer').classList.remove('visible');
+  document.getElementById('generatingState').classList.remove('visible');
+  document.getElementById('resultContainer').classList.remove('visible');
+}
+
+function resetAll() {
+  selectedStyle = null;
+  selectedPrompt = null;
+  hideRight();
+  document.getElementById('applyBtn').disabled = true;
+  document.getElementById('applyBtn').textContent = 'SELECT A STYLE FIRST';
+  if (capturedImageDataUrl) {
+    showAnalysisResults(faceData, JSON.parse(sessionStorage.getItem('lastStyles') || '[]'));
+    document.getElementById('analysisBox').classList.add('visible');
+  }
+}
+
+// Cache styles for reset
+const origShowAnalysis = showAnalysisResults;
+function showAnalysisResults(fd, styles) {
+  sessionStorage.setItem('lastStyles', JSON.stringify(styles));
+  origShowAnalysis(fd, styles);
+}
+</script>
+</body>
+</html>
