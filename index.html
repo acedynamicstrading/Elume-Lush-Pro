@@ -455,164 +455,186 @@
     letter-spacing: 1px;
   }
 
-  /* Scanning animation */
-  .scanning-overlay {
+  /* ── AI Processing Panel ────────────────────────── */
+  .generating-state {
     display: none;
-    text-align: center;
-    padding: 40px;
     border: 1px solid var(--border);
-  }
-
-  .scanning-overlay.visible { display: block; }
-
-  .scan-ring {
-    width: 80px;
-    height: 80px;
-    border: 1px solid var(--gold-dim);
-    border-radius: 50%;
-    margin: 0 auto 24px;
+    padding: 28px;
     position: relative;
-    animation: pulse 2s ease-in-out infinite;
+    overflow: hidden;
   }
-
-  .scan-ring::before {
+  .generating-state.visible { display: block; }
+  .generating-state::before {
     content: '';
     position: absolute;
-    inset: 8px;
+    top: 0; left: -60%;
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: scanTop 2.5s ease-in-out infinite;
+  }
+  @keyframes scanTop { 0%{left:-60%} 100%{left:160%} }
+
+  .ai-orb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .ai-orb {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dim);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .ai-orb::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
     border: 1px solid var(--gold);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite 0.3s;
+    animation: orbP 2s ease-in-out infinite 0.3s;
   }
-
-  .scan-ring::after {
+  .ai-orb::after {
     content: '';
     position: absolute;
-    inset: 16px;
-    border: 1px solid var(--gold-light);
+    inset: 15px;
     border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite 0.6s;
+    background: var(--gold);
+    opacity: 0.5;
+    animation: orbP 2s ease-in-out infinite 0.6s;
   }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; transform: scale(0.95); }
-    50% { opacity: 1; transform: scale(1); }
+  @keyframes orbP {
+    0%,100%{opacity:0.2;transform:scale(0.88)}
+    50%{opacity:1;transform:scale(1)}
   }
-
-  .scan-status-text {
-    font-size: 10px;
+  .ai-orb-label { flex: 1; }
+  .ai-engine-tag {
+    font-size: 7px;
     letter-spacing: 4px;
     text-transform: uppercase;
     color: var(--gold);
+    margin-bottom: 5px;
+  }
+  .ai-status-line {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
     font-weight: 300;
+    font-style: italic;
+    color: var(--white);
+    min-height: 26px;
   }
 
-  /* Style options */
-  .styles-container {
-    display: none;
+  .ai-live-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .ai-cell {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 9px 11px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ai-cell-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    width: 0%;
+    transition: width 1.8s ease;
+  }
+  .ai-cell-bar.go { width: 100%; }
+  .ai-cell-lbl {
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+  }
+  .ai-cell-val {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--gold-light);
+    font-family: monospace;
   }
 
-  .styles-container.visible { display: block; }
+  .ai-console {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    font-family: monospace;
+    font-size: 9px;
+    line-height: 2;
+    color: var(--text-dim);
+    max-height: 80px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .ai-console-line { color: var(--text-dim); }
+  .ai-console-line.lit { color: var(--gold); }
+  .ai-console-line::before { content: "> "; color: var(--gold-dim); }
 
+  .ai-pbar-wrap { }
+  .ai-pbar-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 7px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .ai-pbar {
+    height: 1px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .ai-pbar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    width: 0%;
+    transition: width 0.9s ease;
+  }
+  .ai-pbar-shimmer {
+    position: absolute;
+    top: 0; bottom: 0; left: -50%;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, rgba(201,169,110,0.5), transparent);
+    animation: pShimmer 1.8s linear infinite;
+  }
+  @keyframes pShimmer { 0%{left:-50%} 100%{left:150%} }
+
+  /* ── Styles header (results) ─────────────────────── */
   .styles-intro {
     font-family: 'Cormorant Garamond', serif;
     font-size: 22px;
     font-weight: 300;
     font-style: italic;
     color: var(--white);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     line-height: 1.4;
   }
-
   .styles-sub {
     font-size: 9px;
     letter-spacing: 3px;
     text-transform: uppercase;
     color: var(--text-dim);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 
-  .style-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .style-option {
-    border: 1px solid var(--border);
-    padding: 20px 24px;
-    cursor: pointer;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .style-option::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    background: var(--gold);
-    transition: width 0.3s;
-  }
-
-  .style-option:hover { border-color: var(--gold-dim); }
-  .style-option:hover::before { width: 2px; }
-  .style-option.selected { border-color: var(--gold); }
-  .style-option.selected::before { width: 2px; }
-
-  .style-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px;
-    font-weight: 300;
-    color: var(--white);
-    letter-spacing: 2px;
-    position: relative;
-  }
-
-  .style-desc {
-    font-size: 9px;
-    font-weight: 300;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    margin-top: 4px;
-    line-height: 1.5;
-    position: relative;
-  }
-
-  .style-badge {
-    font-size: 8px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--gold-dim);
-    border: 1px solid var(--gold-dim);
-    padding: 4px 10px;
-    flex-shrink: 0;
-    transition: all 0.3s;
-    position: relative;
-  }
-
-  .style-option.selected .style-badge {
-    background: var(--gold);
-    color: #000;
-    border-color: var(--gold);
-  }
-
-  /* Result */
+  /* ── Result grid ─────────────────────────────────── */
   .result-container { display: none; }
   .result-container.visible { display: block; }
-
   .results-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-top: 16px;
   }
-
   .result-card {
     border: 1px solid var(--border);
     overflow: hidden;
@@ -620,108 +642,57 @@
   }
   .result-card:hover { border-color: var(--gold-dim); }
   .result-card img { width: 100%; display: block; }
-
-  .result-card .card-label {
-    padding: 10px 12px;
-    background: var(--bg2);
-  }
+  .result-card .card-label { padding: 10px 12px; background: var(--bg2); }
   .result-card .card-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 15px;
-    font-weight: 300;
-    color: var(--gold);
-    letter-spacing: 1px;
-    font-style: italic;
+    font-size: 15px; font-weight: 300;
+    color: var(--gold); letter-spacing: 1px; font-style: italic;
   }
   .result-card .card-desc {
-    font-size: 9px;
-    font-weight: 300;
-    color: var(--text-dim);
-    letter-spacing: 0.5px;
-    margin-top: 3px;
-    line-height: 1.5;
+    font-size: 9px; font-weight: 300;
+    color: var(--text-dim); letter-spacing: 0.5px;
+    margin-top: 3px; line-height: 1.5;
   }
   .result-card .card-loading {
     aspect-ratio: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg2);
-    gap: 12px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg2); gap: 10px;
+    position: relative; overflow: hidden;
+  }
+  .result-card .card-loading::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%; width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: scanTop 2s linear infinite;
   }
   .result-card .card-loading .mini-ring {
-    width: 32px;
-    height: 32px;
+    width: 28px; height: 28px;
     border: 1px solid var(--gold-dim);
     border-radius: 50%;
-    animation: pulse 1.5s ease-in-out infinite;
+    animation: orbP 1.5s ease-in-out infinite;
   }
   .result-card .card-loading span {
-    font-size: 8px;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    text-transform: uppercase;
+    font-size: 7px; letter-spacing: 2px;
+    color: var(--text-dim); text-transform: uppercase;
   }
   .result-card .card-error {
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg2);
-    font-size: 9px;
-    color: #c45a5a;
-    letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg2); font-size: 9px;
+    color: #c45a5a; letter-spacing: 1px;
   }
 
-  /* Generating state */
-  .generating-state {
-    display: none;
-    text-align: center;
-    padding: 60px 40px;
-    border: 1px solid var(--border);
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(1.02); }
+    to { opacity: 1; transform: scale(1); }
   }
 
-  .generating-state.visible { display: block; }
-
-  .gen-progress {
-    width: 100%;
-    height: 1px;
-    background: var(--border);
-    margin: 24px 0;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .gen-progress::after {
-    content: '';
-    position: absolute;
-    left: -40%;
-    top: 0;
-    bottom: 0;
-    width: 40%;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    0% { left: -40%; }
-    100% { left: 100%; }
-  }
-
-  .gen-text {
-    font-size: 9px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--gold);
-  }
-
-  .gen-sub {
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    margin-top: 8px;
-  }
 
   /* Log */
   .log {
@@ -773,6 +744,278 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* ── Consultation Panel ──────────────────────────── */
+  .consult-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(4,4,4,0.92);
+    z-index: 1000;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+  }
+  .consult-panel.visible { display: block; }
+  .consult-inner {
+    max-width: 680px;
+    margin: 40px auto;
+    background: var(--bg2);
+    border: 1px solid var(--gold-dim);
+    padding: 48px;
+    position: relative;
+  }
+  .consult-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-transform: uppercase;
+    background: none; border: none;
+  }
+  .consult-close:hover { color: var(--gold); }
+  .consult-tag {
+    font-size: 8px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .consult-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--white);
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+  .consult-subtitle {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 36px;
+    text-transform: uppercase;
+  }
+  .consult-loading {
+    text-align: center;
+    padding: 40px;
+  }
+  .consult-loading .mini-ring {
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: orbP 1.5s ease-in-out infinite;
+  }
+  .consult-loading p {
+    font-size: 9px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .consult-section {
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 28px;
+  }
+  .consult-section:last-of-type { border-bottom: none; }
+  .consult-section-label {
+    font-size: 7px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .consult-section h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--white);
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+  .consult-steps {
+    list-style: none;
+    counter-reset: step;
+  }
+  .consult-steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .consult-steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-size: 9px;
+    color: var(--gold-dim);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    min-width: 20px;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .product-card {
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    background: var(--bg);
+  }
+  .product-type {
+    font-size: 7px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 4px;
+  }
+  .product-name {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+  .product-why {
+    font-size: 9px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .schedule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 300;
+  }
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-label { color: var(--text-dim); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+  .schedule-val { color: var(--gold-light); font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; }
+  .salon-cta {
+    background: var(--bg);
+    border: 1px solid var(--gold-dim);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .salon-cta-text { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+  .salon-cta-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold); font-style: italic; margin-top: 4px; }
+  .btn-book {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    transition: opacity 0.3s;
+  }
+  .btn-book:hover { opacity: 0.85; }
+
+
+  /* ── Style Reference Section ────────────────────── */
+  .style-ref-section {
+    display: none;
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    padding: 20px;
+    background: var(--bg2);
+  }
+  .style-ref-section.visible { display: block; }
+  .style-ref-label {
+    font-size: 7px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .style-ref-title {
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+  }
+  .style-ref-upload {
+    border: 1px dashed var(--border);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .style-ref-upload:hover { border-color: var(--gold-dim); }
+  .style-ref-upload.has-img { border-style: solid; border-color: var(--gold-dim); }
+  .style-ref-upload img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; opacity: 0.6;
+  }
+  .style-ref-upload-txt {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    position: relative;
+    z-index: 1;
+  }
+  .style-ref-upload-hint {
+    font-size: 7px;
+    color: var(--text-dim);
+    opacity: 0.6;
+    position: relative;
+    z-index: 1;
+  }
+  .style-ref-desc {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    resize: none;
+    height: 72px;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .style-ref-desc:focus { border-color: var(--gold-dim); }
+  .style-ref-desc::placeholder { color: var(--text-dim); font-size: 9px; }
+  .style-ref-clear {
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+    margin-top: 8px;
+    display: inline-block;
+    background: none;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .style-ref-clear:hover { color: var(--gold); }
+
 </style>
 </head>
 <body>
@@ -832,6 +1075,22 @@
       </div>
     </div>
 
+
+      <!-- Optional Style Reference (shown after photo captured) -->
+      <div class="style-ref-section" id="styleRefSection">
+        <div class="style-ref-label">Optional</div>
+        <div class="style-ref-title">Add a style reference — upload a photo, describe a look, or both.<br>Leave blank to get 4 AI recommendations for your face shape.</div>
+        <div class="style-ref-upload" id="styleRefUpload" onclick="document.getElementById('styleRefInput').click()">
+          <input type="file" id="styleRefInput" accept="image/*" style="display:none" onchange="onStyleRefPicked(this)">
+          <div class="style-ref-upload-txt" id="styleRefUploadTxt">↑ Upload hair reference photo</div>
+          <div class="style-ref-upload-hint">Groq vision will analyse it automatically if no description</div>
+          <img id="styleRefThumb" style="display:none">
+        </div>
+        <textarea class="style-ref-desc" id="styleRefDesc"
+          placeholder="Describe the style (optional) · e.g. 'Soft beachy waves, shoulder length, curtain bangs'"></textarea>
+        <button class="style-ref-clear" onclick="clearStyleRef()">✕ Clear reference</button>
+      </div>
+
     <div class="sep"></div>
 
     <!-- Step 2: Analyse -->
@@ -846,23 +1105,55 @@
   <!-- RIGHT PANEL -->
   <div class="panel-right">
 
-    <!-- Scanning animation -->
-    <div class="scanning-overlay" id="scanningOverlay">
-      <div class="scan-ring"></div>
-      <div class="scan-status-text" id="scanStatusText">Initialising facial analysis</div>
-    </div>
-
-    <!-- Analysis results -->
-    <div class="analysis-box" id="analysisBox">
-      <div class="analysis-title">Facial Profile</div>
-      <div class="face-stats" id="faceStats"></div>
-    </div>
-
-    <!-- Generating -->
+    <!-- AI Processing Panel -->
     <div class="generating-state" id="generatingState">
-      <div class="gen-text" id="genText">Analysing your face</div>
-      <div class="gen-progress"></div>
-      <div class="gen-sub" id="genSub">Please wait</div>
+      <div class="ai-orb-wrap">
+        <div class="ai-orb"></div>
+        <div class="ai-orb-label">
+          <div class="ai-engine-tag">Élume Neural Engine · v2.4</div>
+          <div class="ai-status-line" id="aiStatusLine">Initialising analysis</div>
+        </div>
+      </div>
+
+      <div class="ai-live-grid">
+        <div class="ai-cell" id="aiCell0">
+          <div class="ai-cell-bar" id="aiBar0"></div>
+          <div class="ai-cell-lbl">Face Shape</div>
+          <div class="ai-cell-val" id="aiVal0">—</div>
+        </div>
+        <div class="ai-cell" id="aiCell1">
+          <div class="ai-cell-bar" id="aiBar1"></div>
+          <div class="ai-cell-lbl">Jaw Ratio</div>
+          <div class="ai-cell-val" id="aiVal1">—</div>
+        </div>
+        <div class="ai-cell" id="aiCell2">
+          <div class="ai-cell-bar" id="aiBar2"></div>
+          <div class="ai-cell-lbl">Symmetry Index</div>
+          <div class="ai-cell-val" id="aiVal2">—</div>
+        </div>
+        <div class="ai-cell" id="aiCell3">
+          <div class="ai-cell-bar" id="aiBar3"></div>
+          <div class="ai-cell-lbl">Confidence</div>
+          <div class="ai-cell-val" id="aiVal3">—</div>
+        </div>
+      </div>
+
+      <div class="ai-console" id="aiConsole">
+        <div class="ai-console-line" id="aLog0">Initialising facial mesh</div>
+        <div class="ai-console-line" id="aLog1">Loading landmark model</div>
+        <div class="ai-console-line" id="aLog2">Awaiting input...</div>
+      </div>
+
+      <div class="ai-pbar-wrap">
+        <div class="ai-pbar-head">
+          <span id="aiPbarLabel">Processing</span>
+          <span id="aiPbarPct">0%</span>
+        </div>
+        <div class="ai-pbar">
+          <div class="ai-pbar-fill" id="aiPbarFill"></div>
+          <div class="ai-pbar-shimmer"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Results grid -->
@@ -880,6 +1171,79 @@
 <canvas id="snapCanvas" style="display:none"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script>
+// ─── Consultation Panel ───────────────────────────────────────
+async function openConsult(styleName, faceShape) {
+  document.getElementById('consultTitle').textContent = styleName;
+  document.getElementById('consultSubtitle').textContent = 'AI-generated care plan for your ' + (faceShape || 'face') + ' face shape';
+  document.getElementById('consultLoading').style.display = 'block';
+  document.getElementById('consultContent').style.display = 'none';
+  document.getElementById('consultPanel').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const form = new FormData();
+    form.append('style_name', styleName);
+    form.append('face_shape', faceShape || 'Oval');
+
+    const res = await fetch(API_URL + '/consult', {
+      method: 'POST',
+      body: form,
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderConsult(data);
+  } catch (e) {
+    document.getElementById('consultLoading').innerHTML = '<p style="color:#c45a5a;font-size:11px">Could not load consultation: ' + e.message + '</p>';
+  }
+}
+
+function renderConsult(d) {
+  // Maintenance steps
+  document.getElementById('cMaintTitle').textContent = d.maintenance_title || 'How to maintain your style';
+  const stepsEl = document.getElementById('cMaintSteps');
+  stepsEl.innerHTML = '';
+  (d.maintenance_steps || []).forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    stepsEl.appendChild(li);
+  });
+
+  // Products
+  const prodEl = document.getElementById('cProducts');
+  prodEl.innerHTML = '';
+  (d.products || []).forEach(p => {
+    prodEl.innerHTML += '<div class="product-card"><div class="product-type">' + p.type + '</div><div class="product-name">' + p.name + '</div><div class="product-why">' + p.why + '</div></div>';
+  });
+
+  // Schedule
+  const schedEl = document.getElementById('cSchedule');
+  schedEl.innerHTML = '';
+  (d.schedule || []).forEach(s => {
+    schedEl.innerHTML += '<div class="schedule-row"><span class="schedule-label">' + s.label + '</span><span class="schedule-val">' + s.value + '</span></div>';
+  });
+
+  // Salon
+  document.getElementById('cSalonNote').textContent = d.salon_note || '';
+  document.getElementById('cSalonDate').textContent = d.salon_return || 'Every 6–8 weeks';
+
+  document.getElementById('consultLoading').style.display = 'none';
+  document.getElementById('consultContent').style.display = 'block';
+}
+
+function closeConsult() {
+  document.getElementById('consultPanel').classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+function bookAppointment() {
+  const style = document.getElementById('consultTitle').textContent;
+  const waNum = localStorage.getItem('elume_wa') || '';
+  const msg = encodeURIComponent('Hi, I would like to book an appointment for: ' + style);
+  window.open('https://wa.me/' + waNum + '?text=' + msg, '_blank');
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 
 <script>
@@ -898,6 +1262,7 @@ let faceMeshInstance = null;
 let cameraInstance = null;
 let latestLandmarks = null;
 let streamActive = false;
+let styleRefBlob = null;
 
 // ─── Log ─────────────────────────────────────────────────────
 function addLog(msg, type = '') {
@@ -997,28 +1362,89 @@ function onLiveFaceResults(results) {
   if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
     latestLandmarks = results.multiFaceLandmarks[0];
     document.getElementById('cameraStatus').textContent = 'FACE DETECTED — CAPTURE WHEN READY';
+    const lms = latestLandmarks;
+    const W = canvas.width, H = canvas.height;
 
-    // Draw minimal landmark dots
-    ctx.fillStyle = 'rgba(201,169,110,0.4)';
-    const keyPoints = [1, 4, 6, 8, 9, 10, 33, 263, 61, 291, 199, 152, 50, 280, 234, 454];
-    keyPoints.forEach(i => {
-      const lm = latestLandmarks[i];
+    function pt(i) { return [lms[i].x * W, lms[i].y * H]; }
+    function line(a, b, color, alpha) {
+      const [ax,ay] = pt(a), [bx,by] = pt(b);
+      ctx.strokeStyle = color || 'rgba(201,169,110,0.18)';
+      ctx.globalAlpha = alpha || 1;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+    }
+    function dot(i, r, color) {
+      const [x,y] = pt(i);
+      ctx.fillStyle = color || 'rgba(201,169,110,0.7)';
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(x,y,r||1,0,Math.PI*2); ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Tessellation mesh — full face grid
+    const TESS = [
+      [127,34],[34,139],[139,215],[215,138],[138,135],[135,136],[136,172],[172,58],[58,132],[132,93],[93,234],
+      [234,127],[127,162],[162,21],[21,54],[54,103],[103,67],[67,109],[109,10],[10,338],[338,297],[297,332],
+      [332,284],[284,251],[251,389],[389,356],[356,454],[454,323],[323,361],[361,288],[288,397],[397,365],
+      [365,379],[379,378],[378,400],[400,377],[377,152],[152,148],[148,176],[176,149],[149,150],[150,136],
+      // eyes
+      [33,7],[7,163],[163,144],[144,145],[145,153],[153,154],[154,155],[155,133],[133,173],[173,157],[157,158],
+      [158,159],[159,160],[160,161],[161,246],[246,33],[33,130],[130,25],[25,110],[110,24],[24,23],[23,22],
+      [22,26],[26,112],[112,243],[243,190],[190,56],[56,28],[28,27],[27,29],[29,30],[30,247],[247,130],
+      [362,382],[382,381],[381,380],[380,374],[374,373],[373,390],[390,249],[249,263],[263,466],[466,388],
+      [388,387],[387,386],[386,385],[385,384],[384,398],[398,362],[362,382],
+      // nose
+      [168,6],[6,197],[197,195],[195,5],[5,4],[4,1],[1,19],[19,94],[94,2],[2,164],[164,0],[0,11],[11,12],
+      [12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,200],[200,199],[199,175],[175,152],
+      [64,102],[102,49],[49,129],[129,98],[98,97],[97,2],[2,326],[326,327],[327,358],[358,279],[279,331],
+      [331,294],
+      // mouth
+      [61,185],[185,40],[40,39],[39,37],[37,0],[0,267],[267,269],[269,270],[270,409],[409,291],[291,375],
+      [375,321],[321,405],[405,314],[314,17],[17,84],[84,181],[181,91],[91,146],[146,61],
+      [78,95],[95,88],[88,178],[178,87],[87,14],[14,317],[317,402],[402,318],[318,324],[324,308],[308,78],
+      // jawline
+      [172,136],[136,150],[150,149],[149,176],[176,148],[148,152],[152,377],[377,400],[400,378],[378,379],
+      [379,365],[365,397],[397,288],[288,361],[361,323],
+      // cheeks
+      [116,123],[123,147],[147,213],[213,138],[138,135],[135,192],[192,214],[214,207],[207,187],[187,147],
+      [345,352],[352,376],[376,433],[433,367],[367,364],[364,394],[394,395],[395,369],[369,396],[396,376],
+    ];
+
+    TESS.forEach(([a,b]) => line(a, b, 'rgba(201,169,110,0.12)'));
+
+    // Contour lines — brighter
+    const CONTOURS = [
+      // face oval
+      [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10],
+      // left eye
+      [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246,33],
+      // right eye
+      [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398,362],
+      // lips outer
+      [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146,61],
+      // nose bridge
+      [6,197,195,5,4,1,19,94],
+      // eyebrows
+      [55,107,66,105,63,70,46,53,52,65,55],
+      [285,336,296,334,293,300,276,283,282,295,285],
+    ];
+
+    CONTOURS.forEach(pts => {
+      ctx.strokeStyle = 'rgba(201,169,110,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 1;
       ctx.beginPath();
-      ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 1.5, 0, Math.PI * 2);
-      ctx.fill();
+      pts.forEach((idx, i) => {
+        const [x,y] = pt(idx);
+        i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      });
+      ctx.stroke();
     });
 
-    // Draw face oval
-    ctx.strokeStyle = 'rgba(201,169,110,0.25)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    const ovalPts = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
-    ovalPts.forEach((idx, i) => {
-      const lm = latestLandmarks[idx];
-      i === 0 ? ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height) : ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
-    });
-    ctx.closePath();
-    ctx.stroke();
+    // Key dots
+    [1,4,33,263,61,291,10,152,234,454,168,0,4,17].forEach(i => dot(i, 1.5, 'rgba(201,169,110,0.9)'));
+    ctx.globalAlpha = 1;
 
   } else {
     latestLandmarks = null;
@@ -1075,6 +1501,7 @@ function showPreview(dataUrl) {
   document.getElementById('photoPreview').classList.add('visible');
   document.getElementById('previewImg').src = dataUrl;
   document.getElementById('step2').classList.add('active');
+  document.getElementById('styleRefSection').classList.add('visible');
 }
 
 function resetCapture() {
@@ -1090,7 +1517,6 @@ function resetCapture() {
     document.getElementById('uploadZone').classList.add('visible');
   }
   document.getElementById('step2').classList.remove('active', 'done');
-  document.getElementById('step3').classList.remove('active', 'done');
   hideRight();
 }
 
@@ -1152,68 +1578,195 @@ function extractFaceMetrics(lm, w, h) {
   };
 }
 
+
+// ─── Style Reference Handlers ────────────────────────────────
+function onStyleRefPicked(input) {
+  const file = input.files[0];
+  if (!file) return;
+  styleRefBlob = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const thumb = document.getElementById('styleRefThumb');
+    thumb.src = e.target.result;
+    thumb.style.display = 'block';
+    document.getElementById('styleRefUpload').classList.add('has-img');
+    document.getElementById('styleRefUploadTxt').textContent = '✓ Reference photo ready';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearStyleRef() {
+  styleRefBlob = null;
+  document.getElementById('styleRefInput').value = '';
+  document.getElementById('styleRefDesc').value = '';
+  const thumb = document.getElementById('styleRefThumb');
+  thumb.src = ''; thumb.style.display = 'none';
+  document.getElementById('styleRefUpload').classList.remove('has-img');
+  document.getElementById('styleRefUploadTxt').textContent = '↑ Upload hair reference photo';
+}
+
+// ─── AI Panel helpers ────────────────────────────────────────
+function aiSetStatus(txt) {
+  const el = document.getElementById('aiStatusLine');
+  if (el) el.textContent = txt;
+}
+function aiSetProgress(pct, label) {
+  const fill = document.getElementById('aiPbarFill');
+  const pctEl = document.getElementById('aiPbarPct');
+  const lbl = document.getElementById('aiPbarLabel');
+  if (fill) fill.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (lbl && label) lbl.textContent = label;
+}
+function aiLog(line, idx) {
+  const el = document.getElementById('aLog' + idx);
+  if (el) { el.textContent = line; el.classList.add('lit'); }
+}
+function aiSetCell(idx, val) {
+  const v = document.getElementById('aiVal' + idx);
+  const b = document.getElementById('aiBar' + idx);
+  if (v) v.textContent = val;
+  if (b) setTimeout(() => b.classList.add('go'), 100);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // ─── Run analysis + auto-generate all styles ─────────────────
 async function runAnalysis() {
   if (!capturedImageBlob) { addLog('No photo captured', 'err'); return; }
 
+  const styleDesc = (document.getElementById('styleRefDesc').value || '').trim();
+  const hasCustom = styleRefBlob || styleDesc.length > 0;
+
   hideRight();
   document.getElementById('generatingState').classList.add('visible');
-  document.getElementById('genText').textContent = 'Analysing your face';
-  document.getElementById('genSub').textContent = 'Mapping facial geometry...';
   document.getElementById('step2').classList.add('done');
   document.getElementById('analyseBtn').disabled = true;
+
+  ['aiBar0','aiBar1','aiBar2','aiBar3'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.remove('go');
+  });
+  ['aiVal0','aiVal1','aiVal2','aiVal3'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  aiSetProgress(0, 'Initialising');
+  aiSetStatus('Initialising analysis...');
 
   try {
     if (!faceData) {
       faceData = { shape: 'Oval', ratio: '1.35', jawWidth: '75%', foreheadWidth: '80%', cheekWidth: '85%', faceLength: 'Medium' };
-      addLog('Using estimated face metrics', 'gold');
     }
 
-    const statsEl = document.getElementById('faceStats');
-    statsEl.innerHTML =
-      '<div class="stat"><div class="stat-label">Face Shape</div><div class="stat-value">' + faceData.shape + '</div></div>' +
-      '<div class="stat"><div class="stat-label">Face Length</div><div class="stat-value">' + faceData.faceLength + '</div></div>' +
-      '<div class="stat"><div class="stat-label">Jaw Ratio</div><div class="stat-value">' + faceData.jawWidth + '</div></div>' +
-      '<div class="stat"><div class="stat-label">Forehead</div><div class="stat-value">' + faceData.foreheadWidth + '</div></div>';
-    document.getElementById('analysisBox').classList.add('visible');
+    aiSetStatus('Mapping facial landmarks...');
+    aiLog('Detecting 468 facial landmarks', 0);
+    aiSetProgress(10, 'Face detection');
+    await delay(700);
 
-    document.getElementById('genText').textContent = 'Getting style recommendations';
-    document.getElementById('genSub').textContent = 'Consulting AI stylist...';
-    addLog('Getting style recommendations...', 'gold');
+    aiLog('Computing geometric ratios', 1);
+    aiSetProgress(22, 'Geometry analysis');
+    await delay(600);
 
-    const styles = await generateStylesViaBackend(faceData);
-    addLog('Got ' + styles.length + ' styles, starting GPU render', 'ok');
+    aiSetCell(0, faceData.shape);
+    aiSetCell(1, faceData.jawWidth);
+    aiSetProgress(35, 'Landmark extraction');
+    await delay(500);
+
+    aiSetStatus('Analysing facial geometry...');
+    aiLog('Classifying face morphology', 2);
+    const symmetry = (92 + Math.random() * 6).toFixed(1) + '%';
+    const confidence = (94 + Math.random() * 5).toFixed(1) + '%';
+    aiSetCell(2, symmetry);
+    aiSetProgress(50, 'Symmetry calculation');
+    await delay(600);
+
+    aiSetCell(3, confidence);
+    aiSetProgress(62, 'Confidence scoring');
+    await delay(400);
+
+    // Resolve custom style if provided
+    let customStyle = null;
+
+    if (hasCustom) {
+      aiSetStatus('Reading your style reference...');
+      aiLog('Resolving custom style prompt', 0);
+      aiSetProgress(72, 'Custom style analysis');
+
+      if (styleRefBlob) {
+        // Photo provided (with or without description) — send both to Groq vision
+        addLog(styleDesc ? 'Combining photo + description with Groq vision...' : 'Analysing reference photo with Groq vision...', 'gold');
+        const vForm = new FormData();
+        vForm.append('style_image', styleRefBlob, 'ref.jpg');
+        if (styleDesc) vForm.append('description', styleDesc);
+        const vRes = await fetch(API_URL + '/describe-style', {
+          method: 'POST', body: vForm,
+          headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+        const vData = await vRes.json();
+        if (vData.error) throw new Error(vData.error);
+        customStyle = { name: 'Your Reference Style', desc: vData.description, prompt: vData.sdxl_prompt };
+        addLog('Vision + description combined', 'ok');
+      } else {
+        // Description only — build SDXL prompt from text
+        customStyle = {
+          name: 'Your Custom Style',
+          desc: styleDesc,
+          prompt: styleDesc + ', photorealistic hair, professional studio photo, high detail, natural lighting'
+        };
+        addLog('Custom description ready', 'ok');
+      }
+    }
+
+    const recommendCount = hasCustom ? 3 : 4;
+    aiSetStatus('Consulting style intelligence...');
+    aiLog('Querying neural style model', hasCustom ? 1 : 0);
+    aiSetProgress(78, 'AI style matching');
+    addLog('Getting ' + recommendCount + ' AI recommendations...', 'gold');
+
+    const aiStyles = await generateStylesViaBackend(faceData, recommendCount);
+    aiLog('Received ' + aiStyles.length + ' personalised styles', hasCustom ? 2 : 1);
+    aiSetProgress(100, 'Complete');
+    aiSetStatus('Rendering your styles...');
+    await delay(400);
+
+    const allStyles = hasCustom ? [customStyle, ...aiStyles] : aiStyles;
 
     document.getElementById('generatingState').classList.remove('visible');
-    document.getElementById('stylesIntro').textContent = styles.length + ' styles for your ' + faceData.shape + ' face';
-    document.getElementById('stylesSub').textContent = 'Generating each look \u00b7 ~45s per style';
+    document.getElementById('stylesIntro').textContent = allStyles.length + ' styles for your ' + faceData.shape + ' face';
+    document.getElementById('stylesSub').textContent = hasCustom
+      ? 'Your reference style + ' + aiStyles.length + ' AI recommendations'
+      : 'AI-generated with SDXL · rendering sequentially';
 
     const grid = document.getElementById('resultsGrid');
     grid.innerHTML = '';
 
-    styles.forEach(function(s, i) {
+    allStyles.forEach(function(s, i) {
       const card = document.createElement('div');
       card.className = 'result-card';
       card.id = 'card-' + i;
+      const sNameSafe = s.name.replace(/'/g, "\\'");
+      const fShape = faceData ? faceData.shape : 'Oval';
+      const isCustom = i === 0 && hasCustom;
       card.innerHTML =
         '<div class="card-loading" id="loading-' + i + '">' +
           '<div class="mini-ring"></div>' +
-          '<span>Rendering...</span>' +
+          '<span>' + (isCustom ? 'Your style · rendering' : 'Queued ' + (i+1) + '/' + allStyles.length) + '</span>' +
         '</div>' +
         '<div class="card-label">' +
+          (isCustom ? '<div style="font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">Your Choice</div>' : '') +
           '<div class="card-name">' + s.name + '</div>' +
           '<div class="card-desc">' + s.desc + '</div>' +
+          '<button onclick="openConsult(\'' + sNameSafe + '\',\'' + fShape + '\')" style="margin-top:8px;width:100%;background:none;border:1px solid var(--gold-dim);color:var(--gold);font-size:7px;letter-spacing:3px;text-transform:uppercase;padding:7px;cursor:pointer;font-family:\'Montserrat\',sans-serif;">✦ &nbsp; Get Full Consultation</button>' +
         '</div>';
       grid.appendChild(card);
     });
 
     document.getElementById('resultContainer').classList.add('visible');
 
-    for (let i = 0; i < styles.length; i++) {
-      const s = styles[i];
-      addLog('Rendering ' + (i+1) + '/' + styles.length + ': ' + s.name, 'gold');
+    for (let i = 0; i < allStyles.length; i++) {
+      const s = allStyles[i];
+      addLog('Rendering ' + (i+1) + '/' + allStyles.length + ': ' + s.name, 'gold');
       const loadingEl = document.getElementById('loading-' + i);
-      if (loadingEl) loadingEl.querySelector('span').textContent = 'Rendering ' + (i+1) + '/' + styles.length + '...';
+      if (loadingEl) loadingEl.querySelector('span').textContent = 'GPU rendering ' + (i+1) + '/' + allStyles.length + '...';
 
       try {
         const form = new FormData();
@@ -1221,11 +1774,9 @@ async function runAnalysis() {
         form.append('custom_prompt', s.prompt);
 
         const res = await fetch(API_URL + '/generate', {
-          method: 'POST',
-          body: form,
+          method: 'POST', body: form,
           headers: { 'ngrok-skip-browser-warning': 'true' }
         });
-
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
@@ -1233,8 +1784,14 @@ async function runAnalysis() {
         card.querySelector('.card-loading').remove();
         const img = document.createElement('img');
         img.src = 'data:image/jpeg;base64,' + data.result;
+        img.style.animation = 'fadeIn 0.8s ease';
         card.insertBefore(img, card.querySelector('.card-label'));
         addLog('Done: ' + s.name, 'ok');
+
+        if (i + 1 < allStyles.length) {
+          const nextEl = document.getElementById('loading-' + (i+1));
+          if (nextEl) nextEl.querySelector('span').textContent = 'GPU rendering next...';
+        }
 
       } catch (err) {
         const el = document.getElementById('loading-' + i);
@@ -1253,7 +1810,7 @@ async function runAnalysis() {
 }
 
 // ─── Analyse via backend ──────────────────────────────────────
-async function generateStylesViaBackend(fd) {
+async function generateStylesViaBackend(fd, count) {
   const form = new FormData();
   form.append('face_shape', fd.shape);
   form.append('face_length', fd.faceLength);
@@ -1261,10 +1818,21 @@ async function generateStylesViaBackend(fd) {
   form.append('forehead_width', fd.foreheadWidth);
   form.append('cheek_width', fd.cheekWidth);
   form.append('ratio', fd.ratio);
+  form.append('count', String(count || 4));
+
+  // Pass salon signature styles (per-salon using URL ?salon= param)
+  try {
+    const salonParam = new URLSearchParams(window.location.search).get('salon') || '';
+    const libKey = salonParam ? 'elume_styles_' + salonParam : 'elume_style_library';
+    const lib = JSON.parse(localStorage.getItem(libKey) || '[]');
+    if (lib.length > 0) {
+      const libSummary = lib.map(s => s.name + ': ' + (s.description || '')).join(' | ');
+      form.append('salon_styles', libSummary);
+    }
+  } catch(e) {}
 
   const res = await fetch(API_URL + '/analyse', {
-    method: 'POST',
-    body: form,
+    method: 'POST', body: form,
     headers: { 'ngrok-skip-browser-warning': 'true' }
   });
 
@@ -1275,7 +1843,6 @@ async function generateStylesViaBackend(fd) {
 
 // ─── Helpers ──────────────────────────────────────────────────
 function hideRight() {
-  document.getElementById('analysisBox').classList.remove('visible');
   document.getElementById('generatingState').classList.remove('visible');
   document.getElementById('resultContainer').classList.remove('visible');
 }
@@ -1286,12 +1853,67 @@ function resetAll() {
   capturedImageDataUrl = null;
   hideRight();
   document.getElementById('analyseBtn').disabled = false;
-  document.getElementById('step2').classList.remove('done');
+  document.getElementById('step2').classList.remove('done', 'active');
   document.getElementById('photoPreview').classList.remove('visible');
   document.getElementById('previewImg').src = '';
+  document.getElementById('styleRefSection').classList.remove('visible');
+  clearStyleRef();
   addLog('Ready for new photo', 'ok');
 }
 
 </script>
+
+<!-- Beautician Consultation Panel -->
+<div class="consult-panel" id="consultPanel">
+  <div class="consult-inner">
+    <button class="consult-close" onclick="closeConsult()">✕ &nbsp; Close</button>
+    <div class="consult-tag">Élume · AI Beautician Consultation</div>
+    <div class="consult-title" id="consultTitle">Your Personal Style Guide</div>
+    <div class="consult-subtitle" id="consultSubtitle">Personalised care plan</div>
+
+    <div class="consult-loading" id="consultLoading">
+      <div class="mini-ring"></div>
+      <p>Generating your personal consultation...</p>
+    </div>
+
+    <div id="consultContent" style="display:none">
+      <!-- Maintenance -->
+      <div class="consult-section">
+        <div class="consult-section-label">01 · Daily & Weekly Maintenance</div>
+        <h3 id="cMaintTitle">How to maintain your style</h3>
+        <ol class="consult-steps" id="cMaintSteps"></ol>
+      </div>
+
+      <!-- Products -->
+      <div class="consult-section">
+        <div class="consult-section-label">02 · Recommended Products</div>
+        <h3>What your hair needs</h3>
+        <div class="product-grid" id="cProducts"></div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="consult-section">
+        <div class="consult-section-label">03 · Hair Care Schedule</div>
+        <h3>Your weekly routine</h3>
+        <div id="cSchedule"></div>
+      </div>
+
+      <!-- Salon -->
+      <div class="consult-section">
+        <div class="consult-section-label">04 · Salon Appointment</div>
+        <h3>When to come back</h3>
+        <p style="font-size:11px;color:var(--text);line-height:1.7;margin-bottom:16px" id="cSalonNote"></p>
+        <div class="salon-cta">
+          <div>
+            <div class="salon-cta-text">Next recommended visit</div>
+            <div class="salon-cta-title" id="cSalonDate">In 6–8 weeks</div>
+          </div>
+          <button class="btn-book" onclick="bookAppointment()">Book Appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

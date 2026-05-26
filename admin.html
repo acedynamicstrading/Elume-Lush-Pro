@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÉLUME · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a96e;--gold-light:#e8d5a3;--gold-dim:#7a6035;
+  --bg:#080808;--bg2:#0f0f0f;--bg3:#161616;
+  --border:#1e1e1e;--text:#d4d0c8;--text-dim:#5a5650;--white:#f0ece4;
+  --green:#4a9e6b;--red:#9e4a4a;
+}
+body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* ── Login ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{border:1px solid var(--border);padding:56px;text-align:center;width:360px}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;letter-spacing:8px;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:8px;letter-spacing:5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:40px}
+.login-box input{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--white);padding:14px 16px;font-size:18px;letter-spacing:8px;text-align:center;font-family:'Montserrat',sans-serif;outline:none;margin-bottom:16px}
+.login-box input:focus{border-color:var(--gold-dim)}
+.btn-login{width:100%;background:var(--gold);color:#000;border:none;padding:14px;font-size:8px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;font-family:'Montserrat',sans-serif}
+.btn-login:hover{opacity:0.85}
+.login-err{color:#c45a5a;font-size:9px;letter-spacing:2px;margin-top:12px;display:none}
+
+/* ── Layout ── */
+#adminApp{display:none}
+.topbar{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:18px;letter-spacing:4px;color:var(--gold);font-style:italic}
+.topbar-right{display:flex;align-items:center;gap:24px;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
+.topbar-right span{cursor:pointer}
+.topbar-right span:hover{color:var(--gold)}
+
+.layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:200px;border-right:1px solid var(--border);padding:24px 0;flex-shrink:0}
+.nav-item{display:block;padding:12px 24px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:all 0.2s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:var(--bg2)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold)}
+
+.main{flex:1;padding:32px;overflow-x:auto}
+.page{display:none}
+.page.active{display:block}
+
+/* ── Page header ── */
+.page-header{margin-bottom:28px}
+.page-tag{font-size:7px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;font-style:italic;color:var(--white)}
+
+/* ── Stats row ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);padding:20px 24px}
+.stat-card-label{font-size:7px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+.stat-card-value{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--gold-light)}
+.stat-card-sub{font-size:8px;color:var(--text-dim);margin-top:4px}
+
+/* ── Table ── */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);overflow:hidden;margin-bottom:24px}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.table-header-title{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim)}
+table{width:100%;border-collapse:collapse}
+th{font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);padding:10px 20px;text-align:left;border-bottom:1px solid var(--border);font-weight:400}
+td{font-size:10px;padding:12px 20px;border-bottom:1px solid rgba(30,30,30,0.5);font-weight:300;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+
+/* ── Badges ── */
+.badge{display:inline-block;font-size:7px;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;border:1px solid}
+.badge-active{color:var(--green);border-color:var(--green)}
+.badge-inactive{color:#9e4a4a;border-color:#9e4a4a}
+.badge-free{color:var(--text-dim);border-color:var(--border)}
+.badge-pro{color:var(--gold);border-color:var(--gold-dim)}
+.badge-salon{color:var(--gold-light);border-color:var(--gold)}
+
+/* ── Buttons ── */
+.btn-sm{font-size:7px;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;background:none;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-family:'Montserrat',sans-serif;transition:all 0.2s}
+.btn-sm:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-sm.danger:hover{border-color:#9e4a4a;color:#c45a5a}
+.btn-primary-sm{background:var(--gold);color:#000;border:none;padding:10px 20px;font-size:8px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:'Montserrat',sans-serif}
+.btn-primary-sm:hover{opacity:0.85}
+
+/* ── Modal ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(4,4,4,0.9);z-index:500;align-items:center;justify-content:center}
+.modal.visible{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--gold-dim);padding:40px;width:440px;position:relative}
+.modal-close{position:absolute;top:16px;right:20px;font-size:9px;letter-spacing:3px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:'Montserrat',sans-serif}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;font-style:italic;color:var(--white);margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-size:11px;font-family:'Montserrat',sans-serif;outline:none}
+.field input:focus,.field select:focus{border-color:var(--gold-dim)}
+.field select option{background:var(--bg)}
+
+/* ── Package cards ── */
+.pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.pkg-card{border:1px solid var(--border);padding:28px}
+.pkg-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;font-style:italic;color:var(--gold);margin-bottom:4px}
+.pkg-price{font-size:24px;font-weight:300;color:var(--white);margin-bottom:16px}
+.pkg-feature{font-size:9px;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.5px}
+.pkg-feature::before{content:'· ';color:var(--gold-dim)}
+
+/* ── Activity log ── */
+.log-entry{padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;font-size:10px;font-weight:300}
+.log-time{color:var(--text-dim);font-size:9px;white-space:nowrap;min-width:80px}
+.log-msg{color:var(--text)}
+.log-user{color:var(--gold-dim);font-size:9px}
+
+  /* ── Style Library ── */
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .lib-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .lib-card:hover { border-color: var(--gold-dim); }
+  .lib-card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: var(--bg3);
+  }
+  .lib-card-no-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .lib-card-body { padding: 14px 16px; }
+  .lib-card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .lib-card-desc {
+    font-size: 9px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .lib-upload-box {
+    border: 1px dashed var(--border);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: border-color 0.3s;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .lib-upload-box:hover { border-color: var(--gold-dim); }
+  .lib-upload-box img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; opacity: 0.5;
+  }
+  .lib-upload-txt {
+    font-size: 8px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-dim);
+    position: relative; z-index: 1;
+  }
+  .lib-empty {
+    text-align: center;
+    padding: 48px;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .lib-empty span {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">ÉLUME</div>
+    <div class="login-sub">Admin Console</div>
+    <input type="password" id="pinInput" placeholder="· · · · ·" maxlength="6"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">Access Console</button>
+    <div class="login-err" id="loginErr">Invalid PIN. Try again.</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp">
+  <div class="topbar">
+    <div class="topbar-logo">Élume Admin</div>
+    <div class="topbar-right">
+      <span onclick="showPage('dashboard')">Dashboard</span>
+      <span onclick="doLogout()">Sign Out</span>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="nav-item active" onclick="showPage('dashboard')">Dashboard</div>
+      <div class="nav-item" onclick="showPage('users')">Users</div>
+      <div class="nav-item" onclick="showPage('packages')">Packages</div>
+      <div class="nav-item" onclick="showPage('activity')">Activity Log</div>
+      <div class="nav-item" onclick="showPage('library')">Style Library</div>
+      <div class="nav-item" onclick="showPage('settings')">Settings</div>
+    </div>
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div class="page-tag">Overview</div>
+          <div class="page-title">Dashboard</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Total Users</div>
+            <div class="stat-card-value" id="statTotal">0</div>
+            <div class="stat-card-sub">Registered accounts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Active</div>
+            <div class="stat-card-value" id="statActive">0</div>
+            <div class="stat-card-sub">Enabled accounts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Pro / Salon</div>
+            <div class="stat-card-value" id="statPaid">0</div>
+            <div class="stat-card-sub">Paid subscribers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Scans Today</div>
+            <div class="stat-card-value" id="statScans">0</div>
+            <div class="stat-card-sub">Across all users</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-title">Recent Users</div>
+            <button class="btn-primary-sm" onclick="showPage('users')">View All</button>
+          </div>
+          <table id="dashRecentTable">
+            <thead><tr><th>Name</th><th>Email</th><th>Package</th><th>Status</th><th>Scans</th></tr></thead>
+            <tbody id="dashRecentBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="page" id="page-users">
+        <div class="page-header">
+          <div class="page-tag">Management</div>
+          <div class="page-title">Users</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <button class="btn-primary-sm" onclick="openAddUser()">+ Add User</button>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <div class="table-header-title">All Users</div>
+            <input placeholder="Search..." oninput="filterUsers(this.value)"
+              style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 12px;font-size:9px;font-family:'Montserrat',sans-serif;outline:none;width:180px">
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Package</th><th>Status</th><th>Salon Code</th><th>Scans</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PACKAGES -->
+      <div class="page" id="page-packages">
+        <div class="page-header">
+          <div class="page-tag">Subscription Tiers</div>
+          <div class="page-title">Packages</div>
+        </div>
+        <div class="pkg-grid">
+          <div class="pkg-card">
+            <div class="pkg-name">Free</div>
+            <div class="pkg-price">$0 <span style="font-size:12px;color:var(--text-dim)">/mo</span></div>
+            <div class="pkg-feature">3 AI scans per month</div>
+            <div class="pkg-feature">Basic style recommendations</div>
+            <div class="pkg-feature">No consultation access</div>
+            <div class="pkg-feature">Standard support</div>
+          </div>
+          <div class="pkg-card" style="border-color:var(--gold-dim)">
+            <div class="pkg-name">Pro</div>
+            <div class="pkg-price">$9.99 <span style="font-size:12px;color:var(--text-dim)">/mo</span></div>
+            <div class="pkg-feature">Unlimited AI scans</div>
+            <div class="pkg-feature">Full AI consultations</div>
+            <div class="pkg-feature">Priority GPU rendering</div>
+            <div class="pkg-feature">Email support</div>
+          </div>
+          <div class="pkg-card" style="border-color:var(--gold)">
+            <div class="pkg-name">Salon</div>
+            <div class="pkg-price">$49.99 <span style="font-size:12px;color:var(--text-dim)">/mo</span></div>
+            <div class="pkg-feature">Up to 20 staff accounts</div>
+            <div class="pkg-feature">Unlimited scans for clients</div>
+            <div class="pkg-feature">Full consultations + booking</div>
+            <div class="pkg-feature">Priority support + onboarding</div>
+          </div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:20px 24px">
+          <div style="font-size:9px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px">Note</div>
+          <div style="font-size:11px;font-weight:300;color:var(--text);line-height:1.7">Package limits are enforced at the backend level. Connect a Cloudflare Worker + D1 database to enable real-time usage tracking and automatic throttling. Currently running on localStorage for demo.</div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div class="page" id="page-activity">
+        <div class="page-header">
+          <div class="page-tag">System Log</div>
+          <div class="page-title">Activity</div>
+        </div>
+        <div class="table-wrap" style="padding:0 20px">
+          <div id="activityLog" style="padding:8px 0"></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div class="page-tag">Configuration</div>
+          <div class="page-title">Settings</div>
+        </div>
+        <div class="table-wrap" style="padding:28px">
+          <div class="field">
+            <label>Admin PIN (change)</label>
+            <input type="password" id="newPin" placeholder="New 4–6 digit PIN">
+          </div>
+          <div class="field">
+            <label>Backend URL (ngrok)</label>
+            <input type="text" id="settingsApiUrl" placeholder="https://...ngrok-free.app">
+          </div>
+          <div class="field">
+            <label>Salon WhatsApp Number</label>
+            <input type="text" id="settingsWa" placeholder="+94771234567">
+          </div>
+          <button class="btn-primary-sm" onclick="saveSettings()" style="margin-top:8px">Save Settings</button>
+          <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+            <button onclick="clearAllData()" style="background:none;border:1px solid #9e4a4a;color:#c45a5a;padding:10px 20px;font-size:8px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:'Montserrat',sans-serif">Clear All Data</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- STYLE LIBRARY -->
+      <div class="page" id="page-library">
+        <div class="page-header">
+          <div class="page-tag">Salon Signature Styles</div>
+          <div class="page-title">Style Library</div>
+        </div>
+
+        <div style="background:var(--bg2);border:1px solid var(--gold-dim);padding:16px 20px;margin-bottom:20px;font-size:10px;font-weight:300;color:var(--text);line-height:1.7">
+          <strong style="color:var(--gold);font-size:8px;letter-spacing:3px;text-transform:uppercase">How this works</strong><br>
+          Each salon has their own private style library. Styles are sent to Groq when that salon's clients get recommendations — Groq always tries to include a matching signature style. Select a salon below to manage their library.
+        </div>
+
+        <!-- Salon selector -->
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px">
+          <div style="font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap">Viewing salon</div>
+          <select id="libSalonSelect" onchange="onSalonSelected()" style="background:var(--bg);border:1px solid var(--border);color:var(--white);padding:8px 12px;font-size:10px;font-family:'Montserrat',sans-serif;outline:none;flex:1">
+            <option value="">— Select a salon —</option>
+          </select>
+          <div id="libSalonCode" style="font-size:8px;letter-spacing:3px;color:var(--gold-dim)"></div>
+        </div>
+
+        <div id="libSalonPrompt" style="text-align:center;padding:32px;border:1px solid var(--border);font-size:10px;color:var(--text-dim);margin-bottom:16px">
+          Select a salon above to view and manage their signature styles.
+        </div>
+
+        <div id="libMain" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-size:9px;letter-spacing:2px;color:var(--text-dim)" id="libCountLabel"></div>
+            <button class="btn-primary-sm" onclick="openAddStyle()">+ Add Style</button>
+          </div>
+
+          <div id="libEmpty" class="lib-empty" style="display:none">
+            <span>No styles yet</span>
+            Add this salon's signature styles — they'll be suggested to matching clients automatically.
+          </div>
+
+          <div class="lib-grid" id="libGrid"></div>
+
+          <div style="background:var(--bg2);border:1px solid var(--border);padding:16px 20px;margin-top:8px">
+            <div style="font-size:7px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Salon URL</div>
+            <div style="font-size:10px;font-weight:300;color:var(--text);margin-bottom:12px" id="libSalonUrl">—</div>
+            <div style="font-size:7px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Export / Import</div>
+            <button class="btn-sm" onclick="exportLibrary()">Download JSON</button>
+            <button class="btn-sm" onclick="document.getElementById('libImportInput').click()" style="margin-left:8px">Import JSON</button>
+            <input type="file" id="libImportInput" accept=".json" style="display:none" onchange="importLibrary(this)">
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /adminApp -->
+
+<!-- ADD USER MODAL -->
+<div class="modal" id="addUserModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addUserModal')">✕ Close</button>
+    <div class="modal-title">Add New User</div>
+    <div class="field"><label>Full Name</label><input id="uName" placeholder="e.g. Amara Silva"></div>
+    <div class="field"><label>Email</label><input id="uEmail" type="email" placeholder="user@email.com"></div>
+    <div class="field"><label>Package</label>
+      <select id="uPkg">
+        <option value="free">Free</option>
+        <option value="pro">Pro</option>
+        <option value="salon">Salon</option>
+      </select>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="uStatus">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="field" id="uSalonCodeField" style="display:none">
+      <label>Salon Code (optional — auto-generated if blank)</label>
+      <input id="uSalonCode" placeholder="e.g. glamhub · used in URL: ?salon=glamhub">
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn-primary-sm" onclick="addUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────────
+const ADMIN_PIN = localStorage.getItem('elume_pin') || '1234';
+
+// ─── Login ───────────────────────────────────────────────────
+function doLogin() {
+  const pin = document.getElementById('pinInput').value;
+  const stored = localStorage.getItem('elume_pin') || '1234';
+  if (pin === stored) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    renderDashboard();
+    loadSettings();
+    logActivity('Admin logged in');
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('pinInput').value = '';
+  }
+}
+
+function doLogout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminApp').style.display = 'none';
+  document.getElementById('pinInput').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+}
+
+// ─── Navigation ───────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(id.replace('_',' '))) n.classList.add('active');
+  });
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'users') renderUsers();
+  if (id === 'activity') renderActivity();
+  if (id === 'library') renderLibrary();
+}
+
+// ─── Data ─────────────────────────────────────────────────────
+function getUsers() { return JSON.parse(localStorage.getItem('elume_users') || '[]'); }
+function saveUsers(users) { localStorage.setItem('elume_users', JSON.stringify(users)); }
+function getLogs() { return JSON.parse(localStorage.getItem('elume_logs') || '[]'); }
+function saveLogs(logs) { localStorage.setItem('elume_logs', JSON.stringify(logs)); }
+
+function logActivity(msg, user) {
+  const logs = getLogs();
+  logs.unshift({ time: new Date().toLocaleTimeString(), date: new Date().toLocaleDateString(), msg, user: user || 'Admin' });
+  if (logs.length > 100) logs.pop();
+  saveLogs(logs);
+}
+
+// ─── Dashboard ────────────────────────────────────────────────
+function renderDashboard() {
+  const users = getUsers();
+  const active = users.filter(u => u.status === 'active').length;
+  const paid = users.filter(u => u.pkg !== 'free').length;
+  const scans = users.reduce((s, u) => s + (u.scans || 0), 0);
+  document.getElementById('statTotal').textContent = users.length;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statPaid').textContent = paid;
+  document.getElementById('statScans').textContent = scans;
+
+  const tbody = document.getElementById('dashRecentBody');
+  tbody.innerHTML = '';
+  users.slice(0, 5).forEach(u => {
+    tbody.innerHTML += `<tr>
+      <td>${u.name}</td><td>${u.email}</td>
+      <td><span class="badge badge-${u.pkg}">${u.pkg}</span></td>
+      <td><span class="badge badge-${u.status}">${u.status}</span></td>
+      <td>${u.scans || 0}</td>
+    </tr>`;
+  });
+}
+
+// ─── Users ────────────────────────────────────────────────────
+function renderUsers(filter) {
+  const users = getUsers();
+  const list = filter ? users.filter(u =>
+    u.name.toLowerCase().includes(filter) || u.email.toLowerCase().includes(filter)
+  ) : users;
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = '';
+  list.forEach((u, realIdx) => {
+    const idx = users.indexOf(u);
+    const salonBadge = u.pkg === 'salon' ? '<span class="badge badge-salon" style="font-size:8px;letter-spacing:1px;padding:2px 6px">' + (u.salonCode || '—') + '</span>' : '<span style="color:var(--text-dim);font-size:10px">—</span>';
+    const stylesBtn = u.pkg === 'salon' ? '<button class="btn-sm" onclick="goToSalonLibrary(\''+u.salonCode+'\')" style="margin-left:4px;border-color:var(--gold-dim);color:var(--gold)">Styles</button>' : '';
+    tbody.innerHTML += `<tr>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
+      <td><span class="badge badge-${u.pkg}">${u.pkg}</span></td>
+      <td><span class="badge badge-${u.status}">${u.status}</span></td>
+      <td>${salonBadge}</td>
+      <td>${u.scans || 0} / ${u.pkg === 'free' ? '3' : '∞'}</td>
+      <td>${u.joined || '—'}</td>
+      <td>
+        <button class="btn-sm" onclick="toggleUser(${idx})">${u.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+        <button class="btn-sm" onclick="changePkg(${idx})" style="margin-left:4px">Package</button>
+        ${stylesBtn}
+        <button class="btn-sm danger" onclick="deleteUser(${idx})" style="margin-left:4px">Delete</button>
+      </td>
+    </tr>`;
+  });
+}
+
+function filterUsers(val) { renderUsers(val.toLowerCase()); }
+
+function toggleUser(idx) {
+  const users = getUsers();
+  const u = users[idx];
+  u.status = u.status === 'active' ? 'inactive' : 'active';
+  saveUsers(users);
+  logActivity((u.status === 'active' ? 'Activated' : 'Deactivated') + ' user: ' + u.name, u.name);
+  renderUsers();
+}
+
+function changePkg(idx) {
+  const users = getUsers();
+  const u = users[idx];
+  const pkgs = ['free', 'pro', 'salon'];
+  const current = pkgs.indexOf(u.pkg);
+  const newPkg = pkgs[(current + 1) % 3];
+  if (confirm('Change ' + u.name + "'s package to " + newPkg + '?')) {
+    u.pkg = newPkg;
+    saveUsers(users);
+    logActivity('Changed package to ' + newPkg + ' for: ' + u.name);
+    renderUsers();
+  }
+}
+
+function deleteUser(idx) {
+  const users = getUsers();
+  const u = users[idx];
+  if (confirm('Delete user ' + u.name + '? This cannot be undone.')) {
+    logActivity('Deleted user: ' + u.name);
+    users.splice(idx, 1);
+    saveUsers(users);
+    renderUsers();
+    renderDashboard();
+  }
+}
+
+function openAddUser() {
+  document.getElementById('uName').value = '';
+  document.getElementById('uEmail').value = '';
+  document.getElementById('uSalonCode').value = '';
+  document.getElementById('uSalonCodeField').style.display = 'none';
+  document.getElementById('uPkg').onchange = function() {
+    document.getElementById('uSalonCodeField').style.display = this.value === 'salon' ? 'block' : 'none';
+  };
+  document.getElementById('addUserModal').classList.add('visible');
+}
+
+function addUser() {
+  const name = document.getElementById('uName').value.trim();
+  const email = document.getElementById('uEmail').value.trim();
+  const pkg = document.getElementById('uPkg').value;
+  const status = document.getElementById('uStatus').value;
+  const customCode = (document.getElementById('uSalonCode').value || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  if (!name || !email) { alert('Name and email required'); return; }
+  const users = getUsers();
+  // Auto-generate salon code for salon package
+  const salonCode = pkg === 'salon'
+    ? (customCode || name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8) + Math.floor(Math.random()*100))
+    : null;
+  users.unshift({ name, email, pkg, status, scans: 0, joined: new Date().toLocaleDateString(), salonCode, id: Date.now().toString() });
+  saveUsers(users);
+  logActivity('Added user: ' + name + (salonCode ? ' · salon code: ' + salonCode : ''));
+  closeModal('addUserModal');
+  renderUsers();
+  renderDashboard();
+}
+
+// ─── Activity ─────────────────────────────────────────────────
+function renderActivity() {
+  const logs = getLogs();
+  const el = document.getElementById('activityLog');
+  el.innerHTML = logs.length === 0
+    ? '<div style="padding:20px;font-size:10px;color:var(--text-dim)">No activity yet.</div>'
+    : logs.map(l => `<div class="log-entry"><div class="log-time">${l.date} ${l.time}</div><div class="log-msg">${l.msg}<span class="log-user"> · ${l.user || 'Admin'}</span></div></div>`).join('');
+}
+
+// ─── Settings ─────────────────────────────────────────────────
+function loadSettings() {
+  const api = localStorage.getItem('elume_api') || '';
+  const wa = localStorage.getItem('elume_wa') || '';
+  document.getElementById('settingsApiUrl').value = api;
+  document.getElementById('settingsWa').value = wa;
+}
+
+function saveSettings() {
+  const pin = document.getElementById('newPin').value.trim();
+  const api = document.getElementById('settingsApiUrl').value.trim();
+  const wa = document.getElementById('settingsWa').value.trim();
+  if (pin) localStorage.setItem('elume_pin', pin);
+  if (api) localStorage.setItem('elume_api', api);
+  if (wa) localStorage.setItem('elume_wa', wa);
+  logActivity('Settings updated');
+  alert('Settings saved');
+}
+
+function clearAllData() {
+  if (confirm('This will delete all users and logs. Are you sure?')) {
+    localStorage.removeItem('elume_users');
+    localStorage.removeItem('elume_logs');
+    renderDashboard();
+    renderUsers();
+    renderActivity();
+    logActivity('All data cleared');
+    alert('Cleared.');
+  }
+}
+
+// ─── Modal ────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+window.addEventListener('click', e => {
+  if (e.target.classList.contains('modal')) e.target.classList.remove('visible');
+});
+
+// ─── Style Library (per-salon) ────────────────────────────────
+let libPhotoBase64 = null;
+let currentSalonCode = null;
+
+function getStyleLib(code) {
+  code = code || currentSalonCode;
+  if (!code) return [];
+  return JSON.parse(localStorage.getItem('elume_styles_' + code) || '[]');
+}
+function saveStyleLib(lib, code) {
+  code = code || currentSalonCode;
+  if (!code) return;
+  localStorage.setItem('elume_styles_' + code, JSON.stringify(lib));
+}
+
+function populateSalonSelect() {
+  const sel = document.getElementById('libSalonSelect');
+  const users = getUsers().filter(u => u.pkg === 'salon' && u.salonCode);
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select a salon —</option>';
+  users.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.salonCode;
+    opt.textContent = u.name + ' (' + u.salonCode + ')';
+    if (u.salonCode === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function onSalonSelected() {
+  const code = document.getElementById('libSalonSelect').value;
+  currentSalonCode = code || null;
+  if (!code) {
+    document.getElementById('libSalonPrompt').style.display = 'block';
+    document.getElementById('libMain').style.display = 'none';
+    document.getElementById('libSalonCode').textContent = '';
+    return;
+  }
+  document.getElementById('libSalonPrompt').style.display = 'none';
+  document.getElementById('libMain').style.display = 'block';
+  document.getElementById('libSalonCode').textContent = '?' + 'salon=' + code;
+  const base = localStorage.getItem('elume_api') || window.location.origin;
+  document.getElementById('libSalonUrl').textContent = 'index.html?salon=' + code;
+  renderLibrary();
+}
+
+function goToSalonLibrary(code) {
+  showPage('library');
+  setTimeout(function() {
+    populateSalonSelect();
+    document.getElementById('libSalonSelect').value = code;
+    onSalonSelected();
+  }, 50);
+}
+
+function renderLibrary() {
+  populateSalonSelect();
+  if (!currentSalonCode) return;
+  const lib = getStyleLib();
+  const grid = document.getElementById('libGrid');
+  const empty = document.getElementById('libEmpty');
+  const countLabel = document.getElementById('libCountLabel');
+  countLabel.textContent = lib.length + ' style' + (lib.length !== 1 ? 's' : '') + ' in this salon library';
+
+  if (lib.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = '';
+  lib.forEach(function(s, i) {
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+    const hasAI = s.aiEnhanced ? '<div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:4px">✓ AI Enhanced</div>' : '';
+    card.innerHTML =
+      (s.image
+        ? '<img class="lib-card-img" src="' + s.image + '" alt="' + s.name + '">'
+        : '<div class="lib-card-no-img">No Photo</div>') +
+      '<div class="lib-card-body">' +
+        hasAI +
+        '<div class="lib-card-name">' + s.name + '</div>' +
+        '<div class="lib-card-desc">' + s.description + '</div>' +
+        (s.faces ? '<div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px">Best for: ' + s.faces + '</div>' : '') +
+        '<button class="btn-sm danger" onclick="deleteStyle(' + i + ')">Delete</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function openAddStyle() {
+  if (!currentSalonCode) { alert('Please select a salon first'); return; }
+  document.getElementById('libName').value = '';
+  document.getElementById('libDesc').value = '';
+  document.getElementById('libFaces').value = '';
+  document.getElementById('libPhotoInput').value = '';
+  document.getElementById('libPhotoThumb').style.display = 'none';
+  document.getElementById('libUploadTxt').style.display = 'block';
+  document.getElementById('aiEnhanceStatus').textContent = 'Upload photo + description → AI will combine and enrich them';
+  document.getElementById('aiEnhanceBtn').disabled = false;
+  libPhotoBase64 = null;
+  document.getElementById('addStyleModal').classList.add('visible');
+}
+
+function onLibPhotoPicked(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    libPhotoBase64 = e.target.result;
+    document.getElementById('libPhotoThumb').src = libPhotoBase64;
+    document.getElementById('libPhotoThumb').style.display = 'block';
+    document.getElementById('libUploadTxt').style.display = 'none';
+    document.getElementById('aiEnhanceStatus').textContent = 'Photo ready · click AI Enhance to generate description';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function aiEnhanceStyle() {
+  const apiUrl = localStorage.getItem('elume_api') || '';
+  if (!apiUrl) { alert('Set the Backend URL in Settings first'); return; }
+  if (!libPhotoBase64 && !document.getElementById('libDesc').value.trim()) {
+    alert('Upload a photo or add a description first');
+    return;
+  }
+  const desc = document.getElementById('libDesc').value.trim();
+  const btn = document.getElementById('aiEnhanceBtn');
+  const status = document.getElementById('aiEnhanceStatus');
+  btn.disabled = true;
+  status.textContent = 'Analysing with Groq vision...';
+
+  try {
+    const form = new FormData();
+    // Convert base64 to blob if photo present
+    if (libPhotoBase64) {
+      const res2 = await fetch(libPhotoBase64);
+      const blob = await res2.blob();
+      form.append('style_image', blob, 'style.jpg');
+    }
+    if (desc) form.append('description', desc);
+
+    const res = await fetch(apiUrl + '/describe-style', {
+      method: 'POST', body: form,
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('libDesc').value = data.description;
+    status.textContent = '✓ AI enhanced — description updated';
+    btn.disabled = false;
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+function saveStyle() {
+  if (!currentSalonCode) { alert('No salon selected'); return; }
+  const name = document.getElementById('libName').value.trim();
+  const desc = document.getElementById('libDesc').value.trim();
+  const faces = document.getElementById('libFaces').value.trim();
+  if (!name) { alert('Style name is required'); return; }
+  if (!desc && !libPhotoBase64) { alert('Add a description or upload a photo'); return; }
+
+  const aiEnhanced = document.getElementById('aiEnhanceStatus').textContent.startsWith('✓');
+  const lib = getStyleLib();
+  lib.unshift({
+    name, description: desc, faces,
+    image: libPhotoBase64 || null,
+    aiEnhanced,
+    added: new Date().toLocaleDateString()
+  });
+  saveStyleLib(lib);
+  logActivity('Added style "' + name + '" to salon: ' + currentSalonCode);
+  closeModal('addStyleModal');
+  renderLibrary();
+}
+
+function deleteStyle(i) {
+  const lib = getStyleLib();
+  const name = lib[i].name;
+  if (confirm('Delete "' + name + '"?')) {
+    lib.splice(i, 1);
+    saveStyleLib(lib);
+    logActivity('Deleted style: ' + name + ' from ' + currentSalonCode);
+    renderLibrary();
+  }
+}
+
+function exportLibrary() {
+  const lib = getStyleLib();
+  const blob = new Blob([JSON.stringify(lib, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'elume_styles_' + currentSalonCode + '.json';
+  a.click();
+}
+
+function importLibrary(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Invalid format');
+      saveStyleLib(data);
+      logActivity('Imported ' + data.length + ' styles to ' + currentSalonCode);
+      renderLibrary();
+      alert('Imported ' + data.length + ' styles');
+    } catch(err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+</script>
+
+<!-- ADD STYLE MODAL -->
+<div class="modal" id="addStyleModal">
+  <div class="modal-box" style="width:520px">
+    <button class="modal-close" onclick="closeModal('addStyleModal')">✕ Close</button>
+    <div class="modal-title">Add Signature Style</div>
+
+    <div class="field">
+      <label>Style Name</label>
+      <input id="libName" placeholder="e.g. The Signature Bob">
+    </div>
+
+    <div class="field">
+      <label>Reference Photo (optional but recommended)</label>
+      <div class="lib-upload-box" onclick="document.getElementById('libPhotoInput').click()">
+        <input type="file" id="libPhotoInput" accept="image/*" style="display:none" onchange="onLibPhotoPicked(this)">
+        <img id="libPhotoThumb" style="display:none">
+        <div class="lib-upload-txt" id="libUploadTxt">Click to upload a reference photo</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea id="libDesc" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-size:11px;font-family:'Montserrat',sans-serif;resize:none;height:72px;outline:none;line-height:1.6" placeholder="Describe the style — e.g. 'Sleek jaw-length bob, blunt ends, deep side part, suits oval and heart faces'"></textarea>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+        <button class="btn-sm" onclick="aiEnhanceStyle()" id="aiEnhanceBtn" style="border-color:var(--gold-dim);color:var(--gold)">✦ AI Enhance Description</button>
+        <span style="font-size:8px;color:var(--text-dim)" id="aiEnhanceStatus">Upload photo + description → AI will combine and enrich them</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Best For (face shapes)</label>
+      <input id="libFaces" placeholder="e.g. Oval, Heart, Diamond">
+    </div>
+
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn-primary-sm" onclick="saveStyle()">Save Style</button>
+      <button class="btn-sm" onclick="closeModal('addStyleModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
