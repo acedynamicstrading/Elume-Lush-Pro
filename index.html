@@ -307,7 +307,15 @@
   .upload-zone:hover { border-color: var(--gold-dim); }
   .upload-zone.dragover { border-color: var(--gold); background: rgba(201,169,110,0.03); }
 
-  .upload-zone input { display: none; }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+  }
 
   .upload-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
 
@@ -1059,8 +1067,8 @@
       <button class="snap-btn" id="snapBtn" onclick="captureSnap()">◉ &nbsp; CAPTURE &amp; ANALYSE</button>
 
       <!-- Upload -->
-      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
-           ondragover="e=>{e.preventDefault();this.classList.add('dragover')}"
+      <div class="upload-zone" id="uploadZone"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
            ondragleave="this.classList.remove('dragover')"
            ondrop="handleDrop(event)">
         <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])">
@@ -1080,8 +1088,10 @@
       <div class="style-ref-section" id="styleRefSection">
         <div class="style-ref-label">Optional</div>
         <div class="style-ref-title">Add a style reference — upload a photo, describe a look, or both.<br>Leave blank to get 4 AI recommendations for your face shape.</div>
-        <div class="style-ref-upload" id="styleRefUpload" onclick="document.getElementById('styleRefInput').click()">
-          <input type="file" id="styleRefInput" accept="image/*" style="display:none" onchange="onStyleRefPicked(this)">
+        <div class="style-ref-upload" id="styleRefUpload">
+          <input type="file" id="styleRefInput" accept="image/*"
+                 style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"
+                 onchange="onStyleRefPicked(this)">
           <div class="style-ref-upload-txt" id="styleRefUploadTxt">↑ Upload hair reference photo</div>
           <div class="style-ref-upload-hint">Groq vision will analyse it automatically if no description</div>
           <img id="styleRefThumb" style="display:none">
